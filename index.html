@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#BA7517">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Petrol Tracker">
+<meta name="description" content="Daily petrol sales tracker with partner profit sharing">
+<link rel="manifest" href="manifest.json">
+<title>Petrol Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --amber: #BA7517;
+  --amber-dark: #854F0B;
+  --amber-light: #FAEEDA;
+  --amber-mid: #EF9F27;
+  --teal: #1D9E75;
+  --teal-light: #E1F5EE;
+  --teal-dark: #0F6E56;
+  --red: #E24B4A;
+  --red-light: #FCEBEB;
+  --bg: #F7F4EE;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE5;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.06);
+  --text: #1A1207;
+  --text2: #6B5E47;
+  --text3: #9C8E7A;
+  --nav-h: 64px;
+  --header-h: 56px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Header */
+.app-header {
+  height: var(--header-h);
+  background: var(--amber);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+}
+.app-header .logo {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.app-header h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.02em;
+}
+.app-header .subtitle {
+  font-size: 11px;
+  color: rgba(255,255,255,0.75);
+  margin-left: auto;
+  font-family: var(--mono);
+}
+.offline-badge {
+  position: absolute;
+  right: 16px;
+  background: rgba(0,0,0,0.25);
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: none;
+}
+.offline-badge.visible { display: block; }
+
+/* Scrollable content */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 80px;
+  display: none;
+}
+.page-content.active { display: block; }
+
+/* Bottom nav */
+.bottom-nav {
+  height: var(--nav-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 500;
+  transition: color 0.15s;
+  padding: 0;
+}
+.nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.nav-btn.active { color: var(--amber); }
+.nav-btn.active svg { stroke-width: 2.2; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+/* Metrics row */
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
+.metric-value { font-size: 22px; font-weight: 600; color: var(--text); font-family: var(--mono); letter-spacing: -0.03em; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.metric-card.accent { background: var(--amber-light); border-color: rgba(186,117,23,0.2); }
+.metric-card.accent .metric-value { color: var(--amber-dark); }
+
+/* Form elements */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%;
+  height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(186,117,23,0.12);
+}
+.field input[readonly] {
+  background: var(--surface2);
+  color: var(--text2);
+  font-family: var(--mono);
+}
+.field input[readonly].profit-pos { color: var(--teal-dark); background: var(--teal-light); }
+.field input[readonly].profit-neg { color: var(--red); background: var(--red-light); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Buttons */
+.btn-primary {
+  width: 100%;
+  height: 50px;
+  background: var(--amber);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: -0.01em;
+}
+.btn-primary:active { background: var(--amber-dark); transform: scale(0.98); }
+.btn-sm {
+  height: 34px;
+  padding: 0 14px;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-sm:active { background: var(--border); }
+.btn-danger { background: var(--red-light); color: var(--red); border: none; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1A1207;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 100;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Sales list */
+.sale-item {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.sale-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sale-date { font-size: 13px; font-weight: 600; color: var(--text); }
+.sale-att { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.sale-profit {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--mono);
+  letter-spacing: -0.02em;
+}
+.sale-profit.pos { color: var(--teal); }
+.sale-profit.neg { color: var(--red); }
+.sale-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sale-meta-item { font-size: 12px; color: var(--text3); }
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-day { background: var(--amber-light); color: var(--amber-dark); }
+.badge-night { background: #26215C; color: #CECBF6; }
+.sale-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 4px;
+  line-height: 1;
+  margin-top: -2px;
+  font-size: 18px;
+}
+.sale-delete:active { color: var(--red); }
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty h3 { font-size: 16px; color: var(--text2); margin-bottom: 6px; }
+.empty p { font-size: 13px; line-height: 1.6; }
+
+/* Filter row */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-row select {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 0 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Profit share */
+.partner-block {
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.partner-row {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.partner-row:last-child { border-bottom: none; }
+.partner-row.a-row { background: var(--amber-light); }
+.partner-row.b-row { background: var(--teal-light); }
+.partner-name { font-size: 14px; font-weight: 600; }
+.partner-name.a { color: var(--amber-dark); }
+.partner-name.b { color: var(--teal-dark); }
+.partner-pct { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.partner-amount { font-size: 20px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.02em; }
+.partner-amount.a { color: var(--amber-dark); }
+.partner-amount.b { color: var(--teal-dark); }
+
+/* Chart */
+.chart-container { position: relative; width: 100%; height: 220px; margin-top: 8px; }
+
+/* Section label */
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  margin: 16px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.count-badge {
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* Install prompt */
+.install-banner {
+  background: var(--amber);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  flex-shrink: 0;
+  display: none;
+}
+.install-banner.visible { display: flex; }
+.install-banner .install-btn {
+  background: white;
+  color: var(--amber);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.install-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 8px 0 0;
+  line-height: 1;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">⛽</div>
+  <div>
+    <h1>Petrol Tracker</h1>
+  </div>
+  <div class="subtitle" id="today-label"></div>
+  <span class="offline-badge" id="offline-badge">Offline</span>
+</div>
+
+<div class="install-banner" id="install-banner">
+  <span>Install app for offline use</span>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <button class="install-btn" id="install-btn">Install</button>
+    <button class="install-close" id="install-close">×</button>
+  </div>
+</div>
+
+<!-- PAGE: RECORD -->
+<div class="page-content active" id="page-record">
+  <div class="card">
+    <div class="card-title">New Sale Entry</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="inp-date">
+      </div>
+      <div class="field">
+        <label>Shift</label>
+        <select id="inp-shift">
+          <option value="Day">☀️ Day</option>
+          <option value="Night">🌙 Night</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Attendant name</label>
+      <input type="text" id="inp-attendant" placeholder="e.g. John Okello" autocomplete="name">
+    </div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Litres sold</label>
+        <input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Cost /L</label>
+        <input type="number" id="inp-cost" placeholder="UGX" step="1" min="0" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Sell /L</label>
+        <input type="number" id="inp-sell" placeholder="UGX" step="1" min="0" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <label>Gross profit preview</label>
+      <input type="text" id="preview-profit" readonly placeholder="Fill in litres + prices above">
+    </div>
+    <button class="btn-primary" id="save-btn" onclick="saveSale()">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save Sale
+    </button>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">Today's litres</div>
+      <div class="metric-value" id="today-litres">0</div>
+      <div class="metric-sub">litres sold</div>
+    </div>
+    <div class="metric-card accent">
+      <div class="metric-label">Today's profit</div>
+      <div class="metric-value" id="today-profit">0</div>
+      <div class="metric-sub">UGX</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SALES LOG -->
+<div class="page-content" id="page-sales">
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">Total litres</div>
+      <div class="metric-value" id="log-litres">0</div>
+      <div class="metric-sub" id="log-period">all time</div>
+    </div>
+    <div class="metric-card accent">
+      <div class="metric-label">Total profit</div>
+      <div class="metric-value" id="log-profit">0</div>
+      <div class="metric-sub">UGX</div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <select id="log-filter" onchange="renderSalesLog()">
+      <option value="">All time</option>
+    </select>
+    <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <div id="sales-list"></div>
+</div>
+
+<!-- PAGE: PROFIT SHARE -->
+<div class="page-content" id="page-profit">
+  <div class="filter-row">
+    <select id="profit-filter" onchange="renderProfit()">
+      <option value="">All time</option>
+    </select>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">Litres sold</div>
+      <div class="metric-value" id="ps-litres">0</div>
+      <div class="metric-sub" id="ps-period">all time</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Gross profit</div>
+      <div class="metric-value" id="ps-gross">0</div>
+      <div class="metric-sub">UGX</div>
+    </div>
+  </div>
+
+  <div class="card-title" style="margin-bottom:10px;">Partner profit share</div>
+  <div class="partner-block">
+    <div class="partner-row a-row">
+      <div>
+        <div class="partner-name a">Partner A</div>
+        <div class="partner-pct">60% of gross profit</div>
+      </div>
+      <div class="partner-amount a" id="ps-a">UGX 0</div>
+    </div>
+    <div class="partner-row b-row">
+      <div>
+        <div class="partner-name b">Partner B</div>
+        <div class="partner-pct">40% of gross profit</div>
+      </div>
+      <div class="partner-amount b" id="ps-b">UGX 0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Monthly profit breakdown</div>
+    <div class="chart-container">
+      <canvas id="profitChart" role="img" aria-label="Monthly profit split between Partner A and Partner B">Monthly profit chart</canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-record" onclick="switchPage('record')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Record
+  </button>
+  <button class="nav-btn" id="nav-sales" onclick="switchPage('sales')">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Sales Log
+  </button>
+  <button class="nav-btn" id="nav-profit" onclick="switchPage('profit')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Profit Share
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ─── Data ─────────────────────────────────────────────────────────────
+let sales = [];
+const STORE_KEY = 'petrol_sales_v1';
+
+function loadData() {
+  try { sales = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { sales = []; }
+}
+function saveData() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(sales));
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────
+function fmt(n, decimals = 0) {
+  const num = parseFloat(n) || 0;
+  return num.toLocaleString('en-UG', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtShort(n) {
+  const abs = Math.abs(n);
+  if(abs >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if(abs >= 1000) return (n/1000).toFixed(0) + 'K';
+  return fmt(n);
+}
+function today() { return new Date().toISOString().slice(0,10); }
+function monthKey(d) { return d.slice(0,7); }
+function monthLabel(ym) {
+  const [y,m] = ym.split('-');
+  return new Date(y, m-1).toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function allMonths() {
+  return [...new Set(sales.map(s => monthKey(s.date)))].sort().reverse();
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────
+let currentPage = 'record';
+function switchPage(p) {
+  document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  currentPage = p;
+  if(p === 'record') renderTodaySummary();
+  if(p === 'sales') { buildFilterOptions('log-filter'); renderSalesLog(); }
+  if(p === 'profit') { buildFilterOptions('profit-filter'); renderProfit(); }
+}
+
+// ─── Record page ──────────────────────────────────────────────────────
+document.getElementById('inp-date').value = today();
+
+const todayEl = document.getElementById('today-label');
+const d = new Date();
+todayEl.textContent = d.toLocaleDateString('en-UG', { weekday:'short', day:'numeric', month:'short' });
+
+['inp-litres','inp-cost','inp-sell'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreview);
+});
+
+function updatePreview() {
+  const l = parseFloat(document.getElementById('inp-litres').value)||0;
+  const c = parseFloat(document.getElementById('inp-cost').value)||0;
+  const s = parseFloat(document.getElementById('inp-sell').value)||0;
+  const el = document.getElementById('preview-profit');
+  if(l && c && s) {
+    const p = (s - c) * l;
+    el.value = 'UGX ' + fmt(p) + (p < 0 ? ' (loss)' : '');
+    el.className = p >= 0 ? 'profit-pos' : 'profit-neg';
+  } else {
+    el.value = '';
+    el.className = '';
+  }
+}
+
+function saveSale() {
+  const d = document.getElementById('inp-date').value;
+  const att = document.getElementById('inp-attendant').value.trim();
+  const l = parseFloat(document.getElementById('inp-litres').value);
+  const c = parseFloat(document.getElementById('inp-cost').value);
+  const s = parseFloat(document.getElementById('inp-sell').value);
+  const sh = document.getElementById('inp-shift').value;
+  if(!d) { showToast('Please select a date'); return; }
+  if(!att) { showToast('Please enter attendant name'); return; }
+  if(!l || l <= 0) { showToast('Enter valid litres sold'); return; }
+  if(!c || c <= 0) { showToast('Enter cost price per litre'); return; }
+  if(!s || s <= 0) { showToast('Enter selling price per litre'); return; }
+  sales.push({ id: Date.now(), date: d, attendant: att, litres: l, cost: c, sell: s, shift: sh });
+  saveData();
+  showToast('Sale saved ✓');
+  document.getElementById('inp-attendant').value = '';
+  document.getElementById('inp-litres').value = '';
+  document.getElementById('inp-cost').value = '';
+  document.getElementById('inp-sell').value = '';
+  document.getElementById('preview-profit').value = '';
+  document.getElementById('preview-profit').className = '';
+  document.getElementById('inp-date').value = today();
+  renderTodaySummary();
+}
+
+function renderTodaySummary() {
+  const t = today();
+  const todaySales = sales.filter(s => s.date === t);
+  const litres = todaySales.reduce((a,s) => a + s.litres, 0);
+  const profit = todaySales.reduce((a,s) => a + (s.sell - s.cost)*s.litres, 0);
+  document.getElementById('today-litres').textContent = litres.toFixed(1);
+  document.getElementById('today-profit').textContent = fmtShort(profit);
+}
+
+// ─── Sales Log ────────────────────────────────────────────────────────
+function buildFilterOptions(elId) {
+  const sel = document.getElementById(elId);
+  const cur = sel.value;
+  const months = allMonths();
+  sel.innerHTML = '<option value="">All time</option>' + months.map(m =>
+    `<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`
+  ).join('');
+}
+
+function renderSalesLog() {
+  const filter = document.getElementById('log-filter').value;
+  const filtered = filter ? sales.filter(s => monthKey(s.date) === filter) : sales;
+  const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+
+  const totalL = filtered.reduce((a,s) => a+s.litres, 0);
+  const totalP = filtered.reduce((a,s) => a+(s.sell-s.cost)*s.litres, 0);
+  document.getElementById('log-litres').textContent = totalL.toFixed(1);
+  document.getElementById('log-profit').textContent = fmtShort(totalP);
+  document.getElementById('log-period').textContent = filter ? monthLabel(filter) : 'all time';
+
+  const list = document.getElementById('sales-list');
+  if(!sorted.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No sales yet</h3><p>Go to Record tab to add your first sale.</p></div>`;
+    return;
+  }
+
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.innerHTML = `Sales entries <span class="count-badge">${sorted.length}</span>`;
+
+  list.innerHTML = '';
+  list.appendChild(label);
+
+  sorted.forEach(s => {
+    const profit = (s.sell - s.cost) * s.litres;
+    const revenue = s.sell * s.litres;
+    const div = document.createElement('div');
+    div.className = 'sale-item';
+    div.innerHTML = `
+      <div class="sale-top">
+        <div>
+          <div class="sale-date">${s.date} &nbsp;<span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span></div>
+          <div class="sale-att">${s.attendant}</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div class="sale-profit ${profit>=0?'pos':'neg'}">UGX ${fmtShort(profit)}</div>
+          <button class="sale-delete" onclick="deleteSale(${s.id})" aria-label="Delete">×</button>
+        </div>
+      </div>
+      <div class="sale-meta">
+        <span class="sale-meta-item">${s.litres.toFixed(2)} L</span>
+        <span class="sale-meta-item">·</span>
+        <span class="sale-meta-item">Cost ${fmt(s.cost)}/L</span>
+        <span class="sale-meta-item">·</span>
+        <span class="sale-meta-item">Sell ${fmt(s.sell)}/L</span>
+        <span class="sale-meta-item">·</span>
+        <span class="sale-meta-item" style="color:var(--text2);">Rev ${fmtShort(revenue)}</span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function deleteSale(id) {
+  if(!confirm('Delete this sale record?')) return;
+  sales = sales.filter(s => s.id !== id);
+  saveData();
+  renderSalesLog();
+  showToast('Record deleted');
+}
+
+// ─── Profit Share ─────────────────────────────────────────────────────
+let chartInst = null;
+function renderProfit() {
+  const filter = document.getElementById('profit-filter').value;
+  const filtered = filter ? sales.filter(s => monthKey(s.date) === filter) : sales;
+  const totalL = filtered.reduce((a,s) => a+s.litres, 0);
+  const totalP = filtered.reduce((a,s) => a+(s.sell-s.cost)*s.litres, 0);
+
+  document.getElementById('ps-litres').textContent = totalL.toFixed(1);
+  document.getElementById('ps-gross').textContent = fmtShort(totalP);
+  document.getElementById('ps-period').textContent = filter ? monthLabel(filter) : 'all time';
+  document.getElementById('ps-a').textContent = 'UGX ' + fmt(totalP * 0.6);
+  document.getElementById('ps-b').textContent = 'UGX ' + fmt(totalP * 0.4);
+
+  const months = allMonths().reverse();
+  if(!months.length) return;
+  const mLabels = months.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short'})+' '+y.slice(2); });
+  const mData = months.map(m => {
+    const ms = sales.filter(s => monthKey(s.date) === m);
+    return Math.round(ms.reduce((a,s) => a+(s.sell-s.cost)*s.litres, 0));
+  });
+
+  if(chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('profitChart'), {
+    type: 'bar',
+    data: {
+      labels: mLabels,
+      datasets: [
+        { label: 'Partner A (60%)', data: mData.map(v => Math.round(v*0.6)), backgroundColor: '#EF9F27', borderRadius: 4 },
+        { label: 'Partner B (40%)', data: mData.map(v => Math.round(v*0.4)), backgroundColor: '#1D9E75', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#6B5E47' } }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 }, color: '#9C8E7A', autoSkip: false } },
+        y: { stacked: true, ticks: { callback: v => fmtShort(v), font: { size: 11 }, color: '#9C8E7A' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+// ─── Export CSV ───────────────────────────────────────────────────────
+function exportCSV() {
+  if(!sales.length) { showToast('No data to export'); return; }
+  const filter = document.getElementById('log-filter').value;
+  const data = filter ? sales.filter(s => monthKey(s.date) === filter) : sales;
+  const header = 'Date,Attendant,Shift,Litres,Cost/L,Sell/L,Revenue,Gross Profit';
+  const rows = data.sort((a,b)=>a.date.localeCompare(b.date)).map(s => {
+    const rev = s.litres * s.sell;
+    const p = (s.sell - s.cost) * s.litres;
+    return [s.date, s.attendant, s.shift, s.litres.toFixed(2), s.cost, s.sell, rev.toFixed(0), p.toFixed(0)].join(',');
+  });
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `petrol-sales-${filter||'all'}.csv`;
+  a.click();
+  showToast('CSV exported');
+}
+
+// ─── Offline detection ────────────────────────────────────────────────
+function updateOnlineStatus() {
+  document.getElementById('offline-badge').classList.toggle('visible', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ─── Service Worker ───────────────────────────────────────────────────
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ─── Install prompt ───────────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('visible');
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if(outcome === 'accepted') document.getElementById('install-banner').classList.remove('visible');
+  deferredPrompt = null;
+});
+document.getElementById('install-close').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('visible');
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────
+loadData();
+renderTodaySummary();
+</script>
+</body>
+</html>
