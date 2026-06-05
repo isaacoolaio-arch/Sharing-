@@ -431,7 +431,8 @@ const K = {
 let sales   = [];   // all local sales (includes pending)
 let prices  = [];   // price history [{id,effectiveDate,cost,sell,note}]
 let queue   = [];   // offline queue of unsaved records
-let cfg = { apiUrl:'', nameA:'Partner A', nameB:'Partner B', attendants:[] };
+const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
+let cfg = { apiUrl: DEFAULT_API, nameA:'Partner A', nameB:'Partner B', attendants:[] };
 
 function loadAll() {
   try { sales  = JSON.parse(localStorage.getItem(K.SALES)  || '[]'); } catch(e){ sales=[]; }
@@ -440,6 +441,8 @@ function loadAll() {
   try {
     const s = JSON.parse(localStorage.getItem(K.SETTINGS));
     if(s) cfg = Object.assign(cfg, s);
+    // always keep default URL if none saved
+    if(!cfg.apiUrl) cfg.apiUrl = DEFAULT_API;
   } catch(e){}
 }
 function saveSalesLocal()  { localStorage.setItem(K.SALES,   JSON.stringify(sales)); }
