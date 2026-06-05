@@ -448,12 +448,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
     <div class="page" id="page-settings">
       <div class="settings-section">
         <div class="settings-section-title">Backend Connection</div>
+        <div id="no-url-warning" style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.25);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:10px;font-size:13px;color:#F87171;display:none;">
+          ⚠️ No API URL saved. Paste your Apps Script URL below and click <strong>Save URL</strong>.
+        </div>
         <div class="settings-row">
           <div class="settings-row-label">Google Apps Script URL</div>
-          <input type="url" id="set-api" placeholder="https://script.google.com/macros/s/..." oninput="onApiUrlChange()">
-          <div class="settings-row-hint">Your deployed web app URL.</div>
-          <div id="api-status-msg" class="api-status" style="display:none;"></div>
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="url" id="set-api" placeholder="https://script.google.com/macros/s/..." style="margin-bottom:8px;">
+          <div class="settings-row-hint">Copy the Web App URL from Apps Script → Deploy → Manage deployments → active version.</div>
+          <div id="api-status-msg" class="api-status" style="display:none;margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn-primary" style="width:auto;height:40px;padding:0 20px;font-size:14px;" onclick="saveApiUrl()">💾 Save URL</button>
             <button class="btn-sm" onclick="testApi()">Test connection</button>
             <button class="btn-sm" onclick="fullSync()">Full sync now</button>
           </div>
@@ -516,7 +520,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ══ Constants ════════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
+const API_URL = ''; // Set your URL in Settings tab
 const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2' };
 const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', settings:'Settings' };
 
@@ -820,9 +824,21 @@ function renderSettings(){
   document.getElementById('set-api').value=cfg.apiUrl||'';
   document.getElementById('set-name-a').value=cfg.nameA||'';
   document.getElementById('set-name-b').value=cfg.nameB||'';
+  // show warning if no URL saved
+  const warn=document.getElementById('no-url-warning');
+  if(warn) warn.style.display=cfg.apiUrl?'none':'block';
   renderAttList();
 }
-function onApiUrlChange(){ cfg.apiUrl=document.getElementById('set-api').value.trim(); saveCfg(); }
+function saveApiUrl(){
+  const url=document.getElementById('set-api').value.trim();
+  if(!url){ showToast('Paste the Apps Script URL first'); return; }
+  cfg.apiUrl=url; saveCfg();
+  const warn=document.getElementById('no-url-warning');
+  if(warn) warn.style.display='none';
+  showToast('URL saved ✓ — testing connection…');
+  testApi();
+}
+function onApiUrlChange(){ /* no-op — use Save URL button */ }
 function saveLocalSettings(){
   cfg.nameA=document.getElementById('set-name-a').value.trim()||'Partner A';
   cfg.nameB=document.getElementById('set-name-b').value.trim()||'Partner B';
@@ -854,16 +870,21 @@ async function apiFetch(method, body=null, params=null){
   return res.json();
 }
 async function testApi(){
-  const url=(document.getElementById('set-api').value.trim())||API_URL;
-  cfg.apiUrl=url; saveCfg();
+  const url=(document.getElementById('set-api').value.trim())||cfg.apiUrl;
+  if(!url){ showToast('No URL — paste your Apps Script URL and click Save URL'); return; }
   const el=document.getElementById('api-status-msg');
   el.className='api-status checking'; el.textContent='Checking connection…'; el.style.display='block';
   setSyncDot('syncing');
   try{
-    const r=await apiFetch('GET',null,{action:'ping'});
-    if(r.ok){ el.className='api-status ok'; el.textContent='✓ Connected — backend is responding correctly.'; setSyncDot('ok'); }
-    else throw new Error(r.error||'Unexpected response');
-  }catch(e){ el.className='api-status err'; el.textContent='✗ Failed: '+e.message+'. Check the URL and that the script is deployed as a web app (Anyone).'; setSyncDot('err'); }
+    const r=await fetch(url+'?action=ping');
+    const j=await r.json();
+    if(j.ok){ el.className='api-status ok'; el.textContent='✓ Connected successfully!'; setSyncDot('ok'); }
+    else throw new Error(j.error||'Bad response');
+  }catch(e){
+    el.className='api-status err';
+    el.textContent='✗ '+e.message+' — Make sure: 1) Execute as = Me  2) Who has access = Anyone  3) You copied the correct URL from the active deployment.';
+    setSyncDot('err');
+  }
 }
 async function fullSync(){
   if(!cfg.apiUrl){ showToast('Set API URL in Settings'); return; }
