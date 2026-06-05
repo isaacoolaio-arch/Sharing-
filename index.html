@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#BA7517">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0E1A">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,27 +15,131 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --amber:#BA7517;--amber-dark:#854F0B;--amber-light:#FAEEDA;--amber-mid:#EF9F27;
-  --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#0F6E56;
-  --red:#E24B4A;--red-light:#FCEBEB;
-  --blue:#378ADD;--blue-light:#E6F1FB;
-  --bg:#F7F4EE;--surface:#FFFFFF;--surface2:#F0EDE5;
-  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.06);
-  --text:#1A1207;--text2:#6B5E47;--text3:#9C8E7A;
-  --nav-h:64px;--header-h:56px;
+  --amber:#3B82F6;--amber-dark:#1D4ED8;--amber-light:rgba(59,130,246,0.13);--amber-mid:#60A5FA;
+  --teal:#22D3EE;--teal-light:rgba(34,211,238,0.12);--teal-dark:#0891B2;
+  --red:#F87171;--red-light:rgba(248,113,113,0.12);
+  --blue:#3B82F6;--blue-light:rgba(59,130,246,0.15);
+  --neon:#4FC3F7;--neon-glow:rgba(79,195,247,0.45);
+  --bg:#070B14;--surface:#0D1525;--surface2:#111D35;
+  --border:rgba(79,195,247,0.18);--border2:rgba(79,195,247,0.10);
+  --text:#E8F4FD;--text2:#94B8D4;--text3:#4A7A9B;
   --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
   --radius:12px;--radius-sm:8px;
+  --nav-h:64px;--header-h:56px;
+  --sidebar-w:220px;
 }
+/* ── NEON GLOW EFFECTS ── */
+.card{box-shadow:0 0 0 1px var(--border2),0 0 14px rgba(79,195,247,0.05);}
+.card:hover{box-shadow:0 0 0 1px rgba(79,195,247,0.22),0 0 22px rgba(79,195,247,0.08);transition:box-shadow 0.2s;}
+.metric-card{box-shadow:0 0 0 1px var(--border2);}
+.metric-card.accent{background:rgba(59,130,246,0.12)!important;border-color:rgba(59,130,246,0.28)!important;box-shadow:0 0 16px rgba(59,130,246,0.15)!important;}
+.metric-card.accent .metric-value{color:#93C5FD!important;}
+.field input,.field select,.filter-row select,.att-add-row input,.settings-row input{background:var(--surface2)!important;color:var(--text)!important;border-color:rgba(79,195,247,0.18)!important;}
+.field input:focus,.field select:focus,.att-add-row input:focus,.settings-row input:focus{border-color:var(--neon)!important;box-shadow:0 0 0 3px rgba(79,195,247,0.14)!important;}
+.field input[readonly]{background:rgba(255,255,255,0.03)!important;color:var(--text3)!important;}
+.field input[readonly].pos{color:#67E8F9!important;background:rgba(34,211,238,0.07)!important;}
+.field input[readonly].neg{color:var(--red)!important;background:rgba(248,113,113,0.07)!important;}
+.btn-sm{background:var(--surface2)!important;color:var(--text2)!important;border-color:rgba(79,195,247,0.18)!important;}
+.btn-sm:hover{border-color:var(--neon)!important;color:var(--neon)!important;}
+.btn-sm.danger{background:rgba(248,113,113,0.1)!important;color:var(--red)!important;border-color:rgba(248,113,113,0.2)!important;}
+.bottom-nav{background:var(--surface)!important;border-top-color:rgba(79,195,247,0.15)!important;}
+.sale-item,.price-item,.settings-row{background:var(--surface)!important;border-color:var(--border2)!important;}
+.sale-item:hover{border-color:rgba(79,195,247,0.25)!important;box-shadow:0 0 12px rgba(79,195,247,0.06)!important;}
+.partner-row-ui.a{background:rgba(59,130,246,0.09)!important;}
+.partner-row-ui.b{background:rgba(34,211,238,0.07)!important;}
+.pname.a,.pamount.a{color:#93C5FD!important;}
+.pname.b,.pamount.b{color:#67E8F9!important;}
+.badge-day{background:rgba(59,130,246,0.18)!important;color:#93C5FD!important;}
+.badge-night{background:rgba(139,92,246,0.18)!important;color:#C4B5FD!important;}
+.badge-pending{background:rgba(255,255,255,0.05)!important;color:var(--text3)!important;}
+.price-current-badge{background:rgba(34,211,238,0.1)!important;color:var(--teal)!important;}
+.att-item{background:var(--surface2)!important;border-color:var(--border2)!important;color:var(--text)!important;}
+.queue-banner{background:rgba(59,130,246,0.1)!important;border-color:rgba(59,130,246,0.2)!important;color:#93C5FD!important;}
+.sidebar{background:#0A1020!important;border-right-color:rgba(79,195,247,0.12)!important;}
+.side-btn:hover{background:rgba(79,195,247,0.06)!important;}
+.side-btn.active{background:rgba(59,130,246,0.15)!important;color:#93C5FD!important;box-shadow:inset 3px 0 0 #3B82F6;}
+.desktop-header{background:var(--surface)!important;border-bottom-color:rgba(79,195,247,0.1)!important;}
+.api-status.ok{background:rgba(34,211,238,0.1);color:var(--teal);}
+.api-status.err{background:rgba(248,113,113,0.1);color:var(--red);}
+.api-status.checking{background:rgba(59,130,246,0.1);color:#93C5FD;}
+table.sales-tbl th{border-bottom-color:rgba(79,195,247,0.1)!important;color:var(--text3)!important;}
+table.sales-tbl td{border-bottom-color:rgba(79,195,247,0.06)!important;color:var(--text)!important;}
+table.sales-tbl tr:hover td{background:rgba(79,195,247,0.04)!important;}
+.tbl-profit.pos{color:#67E8F9!important;}
+.tbl-profit.neg{color:var(--red)!important;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column;max-width:480px;margin:0 auto;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);}
 
-.app-header{height:var(--header-h);background:var(--amber);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;}
-.logo{width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.app-header h1{font-size:17px;font-weight:600;color:white;letter-spacing:-0.02em;}
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+/* ── MOBILE LAYOUT ── */
+.app-shell{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;}
+
+/* ── DESKTOP OVERRIDES (≥900px) ── */
+@media(min-width:900px){
+  .app-shell{
+    max-width:100%;flex-direction:row;height:100vh;overflow:hidden;
+    background:var(--bg);
+  }
+  /* sidebar nav */
+  .sidebar{
+    width:var(--sidebar-w);flex-shrink:0;
+    background:var(--surface);border-right:1px solid var(--border2);
+    display:flex;flex-direction:column;
+    height:100vh;overflow:hidden;
+  }
+  .sidebar-header{
+    height:var(--header-h);background:linear-gradient(135deg,#0D1F3C,#0A1428);border-bottom:1px solid rgba(79,195,247,0.2);
+    display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0;
+  }
+  .sidebar-header .logo{width:30px;height:30px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .sidebar-header h1{font-size:15px;font-weight:600;color:white;}
+  .sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+  .side-btn{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);
+    background:none;border:none;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:500;
+    color:var(--text2);text-align:left;width:100%;transition:background 0.12s,color 0.12s;
+  }
+  .side-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
+  .side-btn:hover{background:var(--surface2);}
+  .side-btn.active{background:var(--amber-light);color:var(--amber-dark);}
+  .side-btn.active svg{stroke-width:2.2;}
+  .sidebar-footer{padding:12px 10px;border-top:1px solid var(--border2);font-size:11px;color:var(--text3);}
+
+  /* hide mobile nav on desktop */
+  .bottom-nav{display:none;}
+  /* hide mobile header on desktop */
+  .mobile-header{display:none;}
+
+  /* main content area */
+  .main-area{
+    flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;
+  }
+  .desktop-header{
+    height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border2);
+    display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;
+  }
+  .desktop-header h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em;}
+  .desktop-header .hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+  .desktop-header .date-lbl{font-size:12px;color:var(--text3);font-family:var(--mono);}
+
+  /* pages become scrollable panels */
+  .page{max-width:720px;padding:24px 28px 40px;}
+
+  /* 2-column form grid on desktop */
+  .desktop-2col{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+  .desktop-2col .card{margin-bottom:0;}
+
+  /* wider metrics */
+  .metrics-row{grid-template-columns:repeat(4,1fr);}
+}
+
+/* ── SHARED ── */
+.mobile-header{height:var(--header-h);background:linear-gradient(135deg,#0D1F3C 0%,#0A1428 100%);border-bottom:1px solid rgba(79,195,247,0.25);box-shadow:0 2px 20px rgba(79,195,247,0.12);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;}
+.mobile-header .logo{width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.mobile-header h1{font-size:17px;font-weight:600;color:white;letter-spacing:-0.02em;}
+.hdr-right-mobile{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .date-lbl{font-size:11px;color:rgba(255,255,255,0.85);font-family:var(--mono);}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);flex-shrink:0;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);flex-shrink:0;transition:background 0.3s;}
 .sync-dot.syncing{background:#FFD700;animation:pulse 1s infinite;}
 .sync-dot.ok{background:#4ade80;}
 .sync-dot.err{background:#f87171;}
@@ -43,17 +147,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .offline-pill{background:rgba(0,0,0,0.3);color:white;font-size:10px;padding:2px 8px;border-radius:20px;display:none;}
 .offline-pill.on{display:block;}
 
+.queue-banner{background:var(--amber-light);border-bottom:1px solid rgba(186,117,23,0.2);padding:8px 16px;font-size:12px;color:var(--amber-dark);display:none;align-items:center;gap:8px;justify-content:space-between;flex-shrink:0;}
+.queue-banner.on{display:flex;}
+
 .page{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 16px 84px;display:none;}
 .page.active{display:block;}
 
 .bottom-nav{height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10;}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--font);font-size:10px;font-weight:500;}
 .nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;}
-.nav-btn.active{color:var(--amber);}
-.nav-btn.active svg{stroke-width:2.2;}
+.nav-btn.active{color:#4FC3F7;}
+.nav-btn.active svg{stroke-width:2.2;filter:drop-shadow(0 0 4px rgba(79,195,247,0.6));}
 
 .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border2);padding:16px;margin-bottom:12px;}
-.card-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;}
+.card-title{font-size:12px;font-weight:600;color:var(--neon);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;text-shadow:0 0 8px rgba(79,195,247,0.4);}
 
 .metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .metric-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;}
@@ -72,20 +179,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .field input[readonly].neg{color:var(--red);background:var(--red-light);}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-.btn-primary{width:100%;height:50px;background:var(--amber);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s,transform 0.1s;}
-.btn-primary:active{background:var(--amber-dark);transform:scale(0.98);}
-.btn-primary:disabled{background:var(--text3);cursor:not-allowed;}
+.btn-primary{width:100%;height:50px;background:linear-gradient(135deg,#1E40AF,#2563EB);color:white;border:1px solid rgba(79,195,247,0.3);border-radius:var(--radius);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;box-shadow:0 0 20px rgba(59,130,246,0.3),0 0 40px rgba(59,130,246,0.1);}
+.btn-primary:hover{background:linear-gradient(135deg,#2563EB,#3B82F6);box-shadow:0 0 28px rgba(59,130,246,0.5),0 0 60px rgba(59,130,246,0.15);}
+.btn-primary:active{transform:scale(0.98);box-shadow:0 0 14px rgba(59,130,246,0.3);}
 .btn-sm{height:36px;padding:0 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.btn-sm:active{background:var(--border);}
 .btn-sm.danger{background:var(--red-light);color:var(--red);border-color:transparent;}
 .btn-icon{width:30px;height:30px;border-radius:6px;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
 .btn-del{background:var(--red-light);color:var(--red);}
 
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1207;color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s,transform 0.2s;z-index:200;white-space:nowrap;pointer-events:none;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1207;color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s,transform 0.2s;z-index:500;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* offline queue banner */
-.queue-banner{background:var(--amber-light);border-bottom:1px solid rgba(186,117,23,0.2);padding:8px 16px;font-size:12px;color:var(--amber-dark);display:none;flex-shrink:0;align-items:center;gap:8px;justify-content:space-between;}
-.queue-banner.on{display:flex;}
+@media(max-width:899px){.toast{bottom:80px;}}
 
 .filter-row{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
 .filter-row select{flex:1;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);padding:0 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
@@ -108,7 +213,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .section-label{font-size:13px;font-weight:600;color:var(--text2);margin:4px 0 10px;display:flex;align-items:center;justify-content:space-between;}
 .count-badge{background:var(--surface2);color:var(--text3);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
 
-/* profit share */
 .partner-block{border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
 .partner-row-ui{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.05);}
 .partner-row-ui:last-child{border-bottom:none;}
@@ -121,19 +225,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .pamount{font-size:20px;font-weight:600;font-family:var(--mono);letter-spacing:-0.02em;}
 .pamount.a{color:var(--amber-dark);}
 .pamount.b{color:var(--teal-dark);}
-.chart-container{position:relative;width:100%;height:220px;margin-top:8px;}
+.chart-container{position:relative;width:100%;height:240px;margin-top:8px;}
 
-/* price history */
 .price-item{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:13px 14px;margin-bottom:8px;}
 .price-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.price-date{font-size:13px;font-weight:600;color:var(--text);}
+.price-date{font-size:13px;font-weight:600;}
 .price-note{font-size:12px;color:var(--text3);margin-top:2px;}
-.price-vals{display:flex;gap:16px;}
+.price-vals{display:flex;gap:16px;flex-wrap:wrap;}
 .price-val{font-size:13px;color:var(--text2);}
 .price-val span{font-family:var(--mono);font-weight:500;color:var(--text);}
-.price-current-badge{font-size:11px;background:var(--teal-light);color:var(--teal-dark);padding:2px 8px;border-radius:20px;font-weight:600;}
+.price-current-badge{font-size:11px;background:var(--teal-light);color:var(--teal-dark);padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;}
 
-/* settings */
 .settings-section{margin-bottom:20px;}
 .settings-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
 .settings-row{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;}
@@ -142,16 +244,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .settings-row input{width:100%;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;background:var(--bg);}
 .settings-row input:focus{border-color:var(--amber);}
 
-/* attendant mgmt */
 .att-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
 .att-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;font-size:14px;}
 .att-add-row{display:flex;gap:8px;}
 .att-add-row input{flex:1;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;background:var(--surface);}
 .att-add-row input:focus{border-color:var(--amber);}
-.btn-add{height:38px;padding:0 16px;background:var(--amber);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;}
+.btn-add{height:38px;padding:0 16px;background:linear-gradient(135deg,#1E40AF,#2563EB);color:white;border:1px solid rgba(79,195,247,0.3);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 12px rgba(59,130,246,0.25);}
 
-/* API URL input */
-.api-status{font-size:11px;margin-top:6px;padding:6px 10px;border-radius:var(--radius-sm);}
+.api-status{font-size:11px;margin-top:8px;padding:8px 10px;border-radius:var(--radius-sm);}
 .api-status.ok{background:var(--teal-light);color:var(--teal-dark);}
 .api-status.err{background:var(--red-light);color:var(--red);}
 .api-status.checking{background:var(--blue-light);color:var(--blue);}
@@ -161,331 +261,344 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .empty h3{font-size:16px;color:var(--text2);margin-bottom:6px;}
 .empty p{font-size:13px;line-height:1.6;}
 
-/* price change form inside card */
-.price-form-inner{padding-top:12px;border-top:1px solid var(--border2);margin-top:4px;}
+/* desktop table for sales log */
+@media(min-width:900px){
+  .sale-item{display:none;}
+  .sales-table-wrap{overflow-x:auto;}
+  table.sales-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+  table.sales-tbl th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border2);white-space:nowrap;}
+  table.sales-tbl td{padding:10px 12px;border-bottom:1px solid var(--border2);color:var(--text);}
+  table.sales-tbl tr:last-child td{border-bottom:none;}
+  table.sales-tbl tr:hover td{background:var(--surface2);}
+  .tbl-profit.pos{color:var(--teal);font-weight:600;}
+  .tbl-profit.neg{color:var(--red);font-weight:600;}
+  .desktop-2col-profit{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+}
+@media(max-width:899px){
+  .sales-table-wrap{display:none;}
+  .desktop-2col-profit{display:block;}
+}
 </style>
 </head>
 <body>
+<div class="app-shell">
 
-<div class="app-header">
-  <div class="logo">⛽</div>
-  <h1>Petrol Tracker</h1>
-  <div class="hdr-right">
-    <span class="date-lbl" id="hdr-date"></span>
-    <span class="sync-dot" id="sync-dot" title="Sync status"></span>
-    <span class="offline-pill" id="offline-pill">Offline</span>
-  </div>
-</div>
-
-<div class="queue-banner" id="queue-banner">
-  <span id="queue-msg">⏳ 0 records pending sync</span>
-  <button class="btn-sm" onclick="flushQueue()">Sync now</button>
-</div>
-
-<!-- ══ PAGE: RECORD ══════════════════════════════════════════════════════════ -->
-<div class="page active" id="page-record">
-  <!-- current price chip -->
-  <div id="current-price-chip" style="background:var(--amber-light);border:1px solid rgba(186,117,23,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--amber-dark);display:none;">
-    <strong>Current prices:</strong> <span id="chip-prices">—</span>
-    &nbsp;·&nbsp; <a href="#" onclick="switchPage('prices');return false;" style="color:var(--amber-dark);text-decoration:underline;">change</a>
-  </div>
-
-  <div class="card">
-    <div class="card-title">New Sale Entry</div>
-    <div class="grid-2">
-      <div class="field">
-        <label>Date</label>
-        <input type="date" id="inp-date">
+  <!-- ── SIDEBAR (desktop only) ── -->
+  <aside class="sidebar" id="sidebar" style="display:none;">
+    <div class="sidebar-header">
+      <div class="logo">⛽</div>
+      <h1>Petrol Tracker</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="side-btn active" id="side-record" onclick="switchPage('record')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Record Sale
+      </button>
+      <button class="side-btn" id="side-sales" onclick="switchPage('sales')">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Sales Log
+      </button>
+      <button class="side-btn" id="side-profit" onclick="switchPage('profit')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Profit Share
+      </button>
+      <button class="side-btn" id="side-prices" onclick="switchPage('prices')">
+        <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Prices
+      </button>
+      <button class="side-btn" id="side-settings" onclick="switchPage('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span class="sync-dot" id="sync-dot-side"></span>
+        <span id="sync-label-side" style="font-size:11px;color:var(--text3);">Ready</span>
       </div>
-      <div class="field">
-        <label>Shift</label>
-        <select id="inp-shift">
-          <option value="Day">☀️ Day</option>
-          <option value="Night">🌙 Night</option>
-        </select>
+      <div id="offline-pill-side" style="display:none;font-size:11px;color:var(--red);">● Offline</div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN AREA ── -->
+  <div class="main-area" id="main-area">
+
+    <!-- Mobile header -->
+    <div class="mobile-header" id="mobile-header">
+      <div class="logo">⛽</div>
+      <h1>Petrol Tracker</h1>
+      <div class="hdr-right-mobile">
+        <span class="date-lbl" id="hdr-date"></span>
+        <span class="sync-dot" id="sync-dot" title="Sync status"></span>
+        <span class="offline-pill" id="offline-pill">Offline</span>
       </div>
     </div>
-    <div class="field">
-      <label>Attendant</label>
-      <select id="inp-attendant">
-        <option value="">— select attendant —</option>
-      </select>
+
+    <!-- Desktop header -->
+    <div class="desktop-header" id="desktop-header" style="display:none;">
+      <h2 id="desktop-page-title">Record Sale</h2>
+      <div class="hdr-right">
+        <span class="date-lbl" id="hdr-date-desk"></span>
+        <span class="sync-dot" id="sync-dot-desk"></span>
+      </div>
     </div>
-    <div class="field">
-      <label>Litres sold</label>
-      <input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+
+    <div class="queue-banner" id="queue-banner">
+      <span id="queue-msg">⏳ 0 records pending sync</span>
+      <button class="btn-sm" onclick="flushQueue()">Sync now</button>
     </div>
-    <div class="field">
-      <label>Gross profit preview</label>
-      <input type="text" id="preview-profit" readonly placeholder="Fill in litres above">
+
+    <!-- ══ RECORD ══ -->
+    <div class="page active" id="page-record">
+      <div id="price-chip" style="background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.08);">
+        <strong>Current prices:</strong> <span id="chip-prices">—</span>
+        &nbsp;·&nbsp;<a href="#" onclick="switchPage('prices');return false;" style="color:#67E8F9;text-decoration:underline;">change</a>
+      </div>
+      <div class="card">
+        <div class="card-title">New Sale Entry</div>
+        <div class="grid-2">
+          <div class="field"><label>Date</label><input type="date" id="inp-date"></div>
+          <div class="field"><label>Shift</label>
+            <select id="inp-shift"><option value="Day">☀️ Day</option><option value="Night">🌙 Night</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Attendant</label>
+          <select id="inp-attendant"><option value="">— select attendant —</option></select>
+        </div>
+        <div class="field"><label>Litres sold</label>
+          <input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+        </div>
+        <div class="field"><label>Gross profit preview</label>
+          <input type="text" id="preview-profit" readonly placeholder="Fill in litres above">
+        </div>
+        <button class="btn-primary" onclick="saveSale()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Sale
+        </button>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-card"><div class="metric-label">Today's litres</div><div class="metric-value" id="today-litres">0.0</div><div class="metric-sub">litres sold</div></div>
+        <div class="metric-card accent"><div class="metric-label">Today's profit</div><div class="metric-value" id="today-profit">0</div><div class="metric-sub">UGX</div></div>
+      </div>
     </div>
-    <button class="btn-primary" id="save-btn" onclick="saveSale()">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Save Sale
+
+    <!-- ══ SALES LOG ══ -->
+    <div class="page" id="page-sales">
+      <div class="metrics-row">
+        <div class="metric-card"><div class="metric-label">Total litres</div><div class="metric-value" id="log-litres">0</div><div class="metric-sub" id="log-period">all time</div></div>
+        <div class="metric-card accent"><div class="metric-label">Total profit</div><div class="metric-value" id="log-profit">0</div><div class="metric-sub">UGX</div></div>
+      </div>
+      <div class="filter-row">
+        <select id="log-filter" onchange="renderSalesLog()"><option value="">All time</option></select>
+        <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <!-- Desktop table -->
+      <div class="sales-table-wrap" id="sales-table-wrap">
+        <table class="sales-tbl" id="sales-tbl">
+          <thead><tr><th>Date</th><th>Attendant</th><th>Shift</th><th>Litres</th><th>Cost/L</th><th>Sell/L</th><th>Revenue</th><th>Profit</th><th></th></tr></thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Mobile cards -->
+      <div id="sales-list"></div>
+    </div>
+
+    <!-- ══ PROFIT SHARE ══ -->
+    <div class="page" id="page-profit">
+      <div class="filter-row">
+        <select id="profit-filter" onchange="renderProfit()"><option value="">All time</option></select>
+      </div>
+      <div class="desktop-2col-profit">
+        <div>
+          <div class="metrics-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-card"><div class="metric-label">Litres sold</div><div class="metric-value" id="ps-litres">0</div><div class="metric-sub" id="ps-period">all time</div></div>
+            <div class="metric-card"><div class="metric-label">Gross profit</div><div class="metric-value" id="ps-gross">0</div><div class="metric-sub">UGX</div></div>
+          </div>
+          <div class="card-title">Partner profit share</div>
+          <div class="partner-block">
+            <div class="partner-row-ui a"><div><div class="pname a" id="ps-name-a">Partner A</div><div class="ppct">60% of gross profit</div></div><div class="pamount a" id="ps-a">UGX 0</div></div>
+            <div class="partner-row-ui b"><div><div class="pname b" id="ps-name-b">Partner B</div><div class="ppct">40% of gross profit</div></div><div class="pamount b" id="ps-b">UGX 0</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Monthly breakdown</div>
+          <div class="chart-container"><canvas id="profitChart" role="img" aria-label="Monthly profit split">Monthly profit chart</canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PRICES ══ -->
+    <div class="page" id="page-prices">
+      <div class="card">
+        <div class="card-title">Set new price</div>
+        <div class="grid-2">
+          <div class="field"><label>Effective date</label><input type="date" id="price-date"></div>
+          <div class="field"><label>Note (optional)</label><input type="text" id="price-note" placeholder="e.g. Supplier increase"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Cost price / L (UGX)</label><input type="number" id="price-cost" placeholder="e.g. 4500" inputmode="numeric"></div>
+          <div class="field"><label>Selling price / L (UGX)</label><input type="number" id="price-sell" placeholder="e.g. 5200" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label>Margin preview</label><input type="text" id="price-margin" readonly placeholder="Fill in prices above"></div>
+        <button class="btn-primary" onclick="saveNewPrice()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Set Price
+        </button>
+      </div>
+      <div class="section-label">Price history <span class="count-badge" id="price-count">0</span></div>
+      <div id="price-history-list"><div class="empty"><div class="empty-icon">🏷️</div><h3>No prices set yet</h3><p>Set your first cost and selling price above.</p></div></div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div class="page" id="page-settings">
+      <div class="settings-section">
+        <div class="settings-section-title">Backend Connection</div>
+        <div class="settings-row">
+          <div class="settings-row-label">Google Apps Script URL</div>
+          <input type="url" id="set-api" placeholder="https://script.google.com/macros/s/..." oninput="onApiUrlChange()">
+          <div class="settings-row-hint">Your deployed web app URL.</div>
+          <div id="api-status-msg" class="api-status" style="display:none;"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-sm" onclick="testApi()">Test connection</button>
+            <button class="btn-sm" onclick="fullSync()">Full sync now</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Partner Names</div>
+        <div class="settings-row"><div class="settings-row-label">Partner A — 60% share</div><input type="text" id="set-name-a" placeholder="e.g. Geoffrey Hissa" oninput="saveLocalSettings()"></div>
+        <div class="settings-row"><div class="settings-row-label">Partner B — 40% share</div><input type="text" id="set-name-b" placeholder="e.g. Isaac Oola" oninput="saveLocalSettings()"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Attendants</div>
+        <div class="settings-row">
+          <div class="att-list" id="att-list"></div>
+          <div class="att-add-row">
+            <input type="text" id="att-inp" placeholder="Enter attendant name" autocomplete="off">
+            <button class="btn-add" onclick="addAttendant()">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Data</div>
+        <div class="settings-row">
+          <div class="settings-row-label">Export backup</div>
+          <div class="settings-row-hint" style="margin-bottom:10px;">Download CSV of all sales.</div>
+          <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-label">Clear local cache</div>
+          <div class="settings-row-hint" style="margin-bottom:10px;">Remove locally cached data. Does not delete from Google Sheets.</div>
+          <button class="btn-sm danger" onclick="clearLocalData()">Clear local cache</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-area -->
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn active" id="nav-record" onclick="switchPage('record')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Record
     </button>
-  </div>
-
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div class="metric-label">Today's litres</div>
-      <div class="metric-value" id="today-litres">0.0</div>
-      <div class="metric-sub">litres sold</div>
-    </div>
-    <div class="metric-card accent">
-      <div class="metric-label">Today's profit</div>
-      <div class="metric-value" id="today-profit">0</div>
-      <div class="metric-sub">UGX</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PAGE: SALES LOG ═══════════════════════════════════════════════════════ -->
-<div class="page" id="page-sales">
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div class="metric-label">Total litres</div>
-      <div class="metric-value" id="log-litres">0</div>
-      <div class="metric-sub" id="log-period">all time</div>
-    </div>
-    <div class="metric-card accent">
-      <div class="metric-label">Total profit</div>
-      <div class="metric-value" id="log-profit">0</div>
-      <div class="metric-sub">UGX</div>
-    </div>
-  </div>
-  <div class="filter-row">
-    <select id="log-filter" onchange="renderSalesLog()"><option value="">All time</option></select>
-    <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
-  </div>
-  <div id="sales-list"></div>
-</div>
-
-<!-- ══ PAGE: PROFIT SHARE ════════════════════════════════════════════════════ -->
-<div class="page" id="page-profit">
-  <div class="filter-row">
-    <select id="profit-filter" onchange="renderProfit()"><option value="">All time</option></select>
-  </div>
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div class="metric-label">Litres sold</div>
-      <div class="metric-value" id="ps-litres">0</div>
-      <div class="metric-sub" id="ps-period">all time</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Gross profit</div>
-      <div class="metric-value" id="ps-gross">0</div>
-      <div class="metric-sub">UGX</div>
-    </div>
-  </div>
-  <div class="card-title">Partner profit share</div>
-  <div class="partner-block">
-    <div class="partner-row-ui a">
-      <div><div class="pname a" id="ps-name-a">Partner A</div><div class="ppct">60% of gross profit</div></div>
-      <div class="pamount a" id="ps-a">UGX 0</div>
-    </div>
-    <div class="partner-row-ui b">
-      <div><div class="pname b" id="ps-name-b">Partner B</div><div class="ppct">40% of gross profit</div></div>
-      <div class="pamount b" id="ps-b">UGX 0</div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Monthly profit breakdown</div>
-    <div class="chart-container">
-      <canvas id="profitChart" role="img" aria-label="Monthly profit split between partners">Monthly profit chart</canvas>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PAGE: PRICES ══════════════════════════════════════════════════════════ -->
-<div class="page" id="page-prices">
-  <div class="card">
-    <div class="card-title">Set new price</div>
-    <div class="grid-2">
-      <div class="field">
-        <label>Effective date</label>
-        <input type="date" id="price-date">
-      </div>
-      <div class="field">
-        <label>Note (optional)</label>
-        <input type="text" id="price-note" placeholder="e.g. Supplier increase">
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="field">
-        <label>Cost price / L (UGX)</label>
-        <input type="number" id="price-cost" placeholder="e.g. 4500" inputmode="numeric">
-      </div>
-      <div class="field">
-        <label>Selling price / L (UGX)</label>
-        <input type="number" id="price-sell" placeholder="e.g. 5200" inputmode="numeric">
-      </div>
-    </div>
-    <div class="field">
-      <label>Margin preview</label>
-      <input type="text" id="price-margin-preview" readonly placeholder="Fill in prices above">
-    </div>
-    <button class="btn-primary" onclick="saveNewPrice()">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-      Set Price
+    <button class="nav-btn" id="nav-sales" onclick="switchPage('sales')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Sales Log
     </button>
-  </div>
+    <button class="nav-btn" id="nav-profit" onclick="switchPage('profit')">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Profit
+    </button>
+    <button class="nav-btn" id="nav-prices" onclick="switchPage('prices')">
+      <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Prices
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="switchPage('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
+    </button>
+  </nav>
 
-  <div class="section-label">Price history <span class="count-badge" id="price-count">0</span></div>
-  <div id="price-history-list">
-    <div class="empty"><div class="empty-icon">🏷️</div><h3>No prices set yet</h3><p>Set your first cost and selling price above.</p></div>
-  </div>
-</div>
-
-<!-- ══ PAGE: SETTINGS ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-settings">
-
-  <div class="settings-section">
-    <div class="settings-section-title">Backend API</div>
-    <div class="settings-row">
-      <div class="settings-row-label">Google Apps Script URL</div>
-      <input type="url" id="set-api" placeholder="https://script.google.com/macros/s/..." oninput="onApiUrlChange()">
-      <div class="settings-row-hint">Paste your deployed web app URL here.</div>
-      <div id="api-status-msg" class="api-status" style="display:none;"></div>
-      <div style="margin-top:10px;display:flex;gap:8px;">
-        <button class="btn-sm" onclick="testApi()">Test connection</button>
-        <button class="btn-sm" onclick="fullSync()">Full sync</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <div class="settings-section-title">Partner Names</div>
-    <div class="settings-row">
-      <div class="settings-row-label">Partner A — 60% share</div>
-      <input type="text" id="set-name-a" placeholder="e.g. Okello James" oninput="saveLocalSettings()">
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-label">Partner B — 40% share</div>
-      <input type="text" id="set-name-b" placeholder="e.g. Auma Grace" oninput="saveLocalSettings()">
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <div class="settings-section-title">Attendants</div>
-    <div class="settings-row">
-      <div class="att-list" id="att-list"></div>
-      <div class="att-add-row">
-        <input type="text" id="att-inp" placeholder="Enter attendant name" autocomplete="off">
-        <button class="btn-add" onclick="addAttendant()">Add</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <div class="settings-section-title">Data</div>
-    <div class="settings-row">
-      <div class="settings-row-label">Export backup</div>
-      <div class="settings-row-hint" style="margin-bottom:10px;">Download CSV of all sales.</div>
-      <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-label">Clear local data</div>
-      <div class="settings-row-hint" style="margin-bottom:10px;">Remove all locally cached data. Does not delete from Google Sheets.</div>
-      <button class="btn-sm danger" onclick="clearLocalData()">Clear local cache</button>
-    </div>
-  </div>
-</div>
-
-<!-- Bottom nav -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" id="nav-record" onclick="switchPage('record')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    Record
-  </button>
-  <button class="nav-btn" id="nav-sales" onclick="switchPage('sales')">
-    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-    Sales Log
-  </button>
-  <button class="nav-btn" id="nav-profit" onclick="switchPage('profit')">
-    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    Profit
-  </button>
-  <button class="nav-btn" id="nav-prices" onclick="switchPage('prices')">
-    <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-    Prices
-  </button>
-  <button class="nav-btn" id="nav-settings" onclick="switchPage('settings')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    Settings
-  </button>
-</nav>
-
+</div><!-- /app-shell -->
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ══ Storage keys ═══════════════════════════════════════════════════════════════
-const K = {
-  SALES:    'pt_sales_v2',
-  PRICES:   'pt_prices_v2',
-  SETTINGS: 'pt_settings_v2',
-  QUEUE:    'pt_queue_v2',
-};
+// ══ Constants ════════════════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
+const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2' };
+const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', settings:'Settings' };
 
-// ══ State ══════════════════════════════════════════════════════════════════════
-let sales   = [];   // all local sales (includes pending)
-let prices  = [];   // price history [{id,effectiveDate,cost,sell,note}]
-let queue   = [];   // offline queue of unsaved records
-const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
-let cfg = { apiUrl: DEFAULT_API, nameA:'Partner A', nameB:'Partner B', attendants:[] };
+// ══ State ═════════════════════════════════════════════════════════════════════
+let sales=[], prices=[], queue=[];
+let cfg = { apiUrl:API_URL, nameA:'Partner A', nameB:'Partner B', attendants:[] };
 
-function loadAll() {
-  try { sales  = JSON.parse(localStorage.getItem(K.SALES)  || '[]'); } catch(e){ sales=[]; }
-  try { prices = JSON.parse(localStorage.getItem(K.PRICES) || '[]'); } catch(e){ prices=[]; }
-  try { queue  = JSON.parse(localStorage.getItem(K.QUEUE)  || '[]'); } catch(e){ queue=[]; }
-  try {
-    const s = JSON.parse(localStorage.getItem(K.SETTINGS));
-    if(s) cfg = Object.assign(cfg, s);
-    // always keep default URL if none saved
-    if(!cfg.apiUrl) cfg.apiUrl = DEFAULT_API;
-  } catch(e){}
+function loadAll(){
+  try{ sales  = JSON.parse(localStorage.getItem(K.SALES)  ||'[]'); }catch(e){ sales=[]; }
+  try{ prices = JSON.parse(localStorage.getItem(K.PRICES) ||'[]'); }catch(e){ prices=[]; }
+  try{ queue  = JSON.parse(localStorage.getItem(K.QUEUE)  ||'[]'); }catch(e){ queue=[]; }
+  try{
+    const s=JSON.parse(localStorage.getItem(K.SETTINGS));
+    if(s) cfg=Object.assign(cfg,s);
+    if(!cfg.apiUrl) cfg.apiUrl=API_URL;
+  }catch(e){}
 }
-function saveSalesLocal()  { localStorage.setItem(K.SALES,   JSON.stringify(sales)); }
-function savePricesLocal() { localStorage.setItem(K.PRICES,  JSON.stringify(prices)); }
-function saveQueueLocal()  { localStorage.setItem(K.QUEUE,   JSON.stringify(queue)); }
-function saveLocalSettings(){
-  cfg.nameA = (document.getElementById('set-name-a').value.trim()) || 'Partner A';
-  cfg.nameB = (document.getElementById('set-name-b').value.trim()) || 'Partner B';
-  localStorage.setItem(K.SETTINGS, JSON.stringify(cfg));
-  pushSettingsToServer();
-}
+const saveS  = ()=>localStorage.setItem(K.SALES,   JSON.stringify(sales));
+const saveP  = ()=>localStorage.setItem(K.PRICES,  JSON.stringify(prices));
+const saveQ  = ()=>localStorage.setItem(K.QUEUE,   JSON.stringify(queue));
+const saveCfg= ()=>localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
 
-// ══ Utilities ══════════════════════════════════════════════════════════════════
-function fmt(n,dp=0){ return (parseFloat(n)||0).toLocaleString('en-UG',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
+// ══ Utilities ═════════════════════════════════════════════════════════════════
+const fmt=(n,dp=0)=>(parseFloat(n)||0).toLocaleString('en-UG',{minimumFractionDigits:dp,maximumFractionDigits:dp});
 function fmtShort(n){ const a=Math.abs(n); if(a>=1e6) return (n/1e6).toFixed(1)+'M'; if(a>=1e3) return (n/1e3).toFixed(0)+'K'; return fmt(n); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
-function monthKey(d){ return String(d).slice(0,7); }
-function monthLabel(ym){ const[y,m]=ym.split('-'); return new Date(y,m-1).toLocaleString('default',{month:'long',year:'numeric'}); }
-function allMonths(){ return [...new Set(sales.map(s=>monthKey(s.date)))].sort().reverse(); }
-function uid(){ return Date.now()+'_'+Math.random().toString(36).slice(2,7); }
-
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const monthKey=d=>String(d).slice(0,7);
+const monthLabel=ym=>{ const[y,m]=ym.split('-'); return new Date(y,m-1).toLocaleString('default',{month:'long',year:'numeric'}); };
+const allMonths=()=>[...new Set(sales.map(s=>monthKey(s.date)))].sort().reverse();
+const uid=()=>Date.now()+'_'+Math.random().toString(36).slice(2,7);
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(t._tid);
-  t._tid=setTimeout(()=>t.classList.remove('show'),2400);
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// ══ Header ═════════════════════════════════════════════════════════════════════
-document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-UG',{weekday:'short',day:'numeric',month:'short'});
+// ══ Responsive layout ═════════════════════════════════════════════════════════
+const isDesktop=()=>window.innerWidth>=900;
+function applyLayout(){
+  const d=isDesktop();
+  document.getElementById('sidebar').style.display      = d?'flex':'none';
+  document.getElementById('mobile-header').style.display= d?'none':'flex';
+  document.getElementById('desktop-header').style.display=d?'flex':'none';
+  document.getElementById('bottom-nav').style.display   = d?'none':'flex';
+  // adjust page padding on desktop
+  document.querySelectorAll('.page').forEach(p=>{
+    p.style.padding = d?'24px 28px 40px':'16px 16px 84px';
+  });
+  // date labels
+  const ds=new Date().toLocaleDateString('en-UG',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('hdr-date').textContent=ds;
+  document.getElementById('hdr-date-desk').textContent=ds;
+}
+window.addEventListener('resize',applyLayout);
 
-function setSyncDot(state){ // 'idle'|'syncing'|'ok'|'err'
-  const d=document.getElementById('sync-dot');
-  d.className='sync-dot '+(state!=='idle'?state:'');
-  if(state==='ok'||state==='err') setTimeout(()=>setSyncDot('idle'),3000);
+// ══ Sync dots (update both mobile + desktop/sidebar) ═══════════════════════════
+function setSyncDot(state){
+  ['sync-dot','sync-dot-desk','sync-dot-side'].forEach(id=>{
+    const d=document.getElementById(id);
+    if(!d) return;
+    d.className='sync-dot '+(state!=='idle'?state:'');
+  });
+  const lbl=document.getElementById('sync-label-side');
+  if(lbl){
+    if(state==='syncing') lbl.textContent='Syncing…';
+    else if(state==='ok') lbl.textContent='Synced ✓';
+    else if(state==='err') lbl.textContent='Sync failed';
+    else lbl.textContent='Ready';
+  }
+  if(state==='ok'||state==='err') setTimeout(()=>setSyncDot('idle'),4000);
 }
 
 // ══ Navigation ════════════════════════════════════════════════════════════════
 function switchPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn,.side-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  document.getElementById('nav-'+p).classList.add('active');
+  // activate both mobile nav and sidebar btn
+  const nb=document.getElementById('nav-'+p);   if(nb) nb.classList.add('active');
+  const sb=document.getElementById('side-'+p);  if(sb) sb.classList.add('active');
+  // update desktop header title
+  const th=document.getElementById('desktop-page-title'); if(th) th.textContent=PAGE_TITLES[p]||'';
   if(p==='record')   { populateAttDropdown(); renderTodaySummary(); updatePriceChip(); }
   if(p==='sales')    { buildFilterOpts('log-filter'); renderSalesLog(); }
   if(p==='profit')   { buildFilterOpts('profit-filter'); renderProfit(); }
@@ -493,53 +606,79 @@ function switchPage(p){
   if(p==='settings') { renderSettings(); }
 }
 
-// ══ Current price helpers ══════════════════════════════════════════════════════
-function currentPrice(){
-  // latest price entry effective on or before today
-  const today=todayStr();
-  const sorted=[...prices].sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate)));
-  return sorted.find(p=>String(p.effectiveDate)<=today) || null;
-}
-function priceAtDate(date){
-  const sorted=[...prices].sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate)));
-  return sorted.find(p=>String(p.effectiveDate)<=String(date)) || null;
-}
+// ══ Prices ════════════════════════════════════════════════════════════════════
+const pricesSorted=()=>[...prices].sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate)));
+function currentPrice(){ const t=todayStr(); return pricesSorted().find(p=>String(p.effectiveDate)<=t)||null; }
+function priceAtDate(date){ return pricesSorted().find(p=>String(p.effectiveDate)<=String(date))||null; }
 function updatePriceChip(){
-  const cp=currentPrice();
-  const chip=document.getElementById('current-price-chip');
-  if(cp){
-    document.getElementById('chip-prices').textContent=`Cost ${fmt(cp.cost)}/L · Sell ${fmt(cp.sell)}/L`;
-    chip.style.display='block';
-  } else {
-    chip.style.display='none';
-  }
+  const cp=currentPrice(), chip=document.getElementById('price-chip');
+  if(cp){ document.getElementById('chip-prices').textContent=`Cost ${fmt(cp.cost)}/L · Sell ${fmt(cp.sell)}/L`; chip.style.display='block'; }
+  else chip.style.display='none';
   updatePreview();
 }
+document.getElementById('price-date').value=todayStr();
+['price-cost','price-sell'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  const c=parseFloat(document.getElementById('price-cost').value)||0;
+  const s=parseFloat(document.getElementById('price-sell').value)||0;
+  const el=document.getElementById('price-margin');
+  if(c&&s){ const m=s-c; el.value=`Margin: UGX ${fmt(m)}/L (${(m/c*100).toFixed(1)}%)`; el.className=m>=0?'pos':'neg'; }
+  else { el.value=''; el.className=''; }
+}));
+async function saveNewPrice(){
+  const date=document.getElementById('price-date').value;
+  const cost=parseFloat(document.getElementById('price-cost').value);
+  const sell=parseFloat(document.getElementById('price-sell').value);
+  const note=document.getElementById('price-note').value.trim();
+  if(!date){ showToast('Select effective date'); return; }
+  if(!cost||cost<=0){ showToast('Enter cost price'); return; }
+  if(!sell||sell<=0){ showToast('Enter selling price'); return; }
+  const entry={id:uid(),effectiveDate:date,cost,sell,note};
+  prices.push(entry); saveP(); renderPriceHistory(); updatePriceChip();
+  document.getElementById('price-cost').value='';
+  document.getElementById('price-sell').value='';
+  document.getElementById('price-note').value='';
+  document.getElementById('price-margin').value='';
+  document.getElementById('price-date').value=todayStr();
+  showToast('Price set ✓');
+  if(cfg.apiUrl){ try{ await apiFetch('POST',{action:'savePrice',data:entry}); setSyncDot('ok'); }catch(e){ setSyncDot('err'); } }
+}
+function renderPriceHistory(){
+  const sorted=pricesSorted();
+  document.getElementById('price-count').textContent=sorted.length;
+  const cp=currentPrice();
+  const list=document.getElementById('price-history-list');
+  if(!sorted.length){ list.innerHTML=`<div class="empty"><div class="empty-icon">🏷️</div><h3>No prices set yet</h3><p>Add your first price above.</p></div>`; return; }
+  list.innerHTML=sorted.map(p=>{
+    const m=p.sell-p.cost, isCur=cp&&cp.id===p.id;
+    return `<div class="price-item">
+      <div class="price-top">
+        <div><div class="price-date">Effective: ${p.effectiveDate}</div>${p.note?`<div class="price-note">${p.note}</div>`:''}</div>
+        ${isCur?'<span class="price-current-badge">Current</span>':''}
+      </div>
+      <div class="price-vals">
+        <div class="price-val">Cost: <span>${fmt(p.cost)}/L</span></div>
+        <div class="price-val">Sell: <span>${fmt(p.sell)}/L</span></div>
+        <div class="price-val">Margin: <span style="color:${m>=0?'var(--teal)':'var(--red)'}">${fmt(m)}/L</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-// ══ Record page ════════════════════════════════════════════════════════════════
+// ══ Record ════════════════════════════════════════════════════════════════════
 document.getElementById('inp-date').value=todayStr();
 document.getElementById('inp-litres').addEventListener('input',updatePreview);
-
 function populateAttDropdown(){
-  const sel=document.getElementById('inp-attendant');
-  const cur=sel.value;
+  const sel=document.getElementById('inp-attendant'), cur=sel.value;
   sel.innerHTML='<option value="">— select attendant —</option>'+
     cfg.attendants.map(a=>`<option value="${a}"${a===cur?' selected':''}>${a}</option>`).join('');
 }
-
 function updatePreview(){
   const l=parseFloat(document.getElementById('inp-litres').value)||0;
-  const cp=currentPrice();
-  const el=document.getElementById('preview-profit');
-  if(l&&cp){
-    const p=(cp.sell-cp.cost)*l;
-    el.value='UGX '+fmt(p)+(p<0?' (loss)':'');
-    el.className=p>=0?'pos':'neg';
-  } else if(l&&!cp){
-    el.value='No price set — go to Prices tab'; el.className='';
-  } else { el.value=''; el.className=''; }
+  const cp=currentPrice(), el=document.getElementById('preview-profit');
+  if(l&&cp){ const p=(cp.sell-cp.cost)*l; el.value='UGX '+fmt(p)+(p<0?' (loss)':''); el.className=p>=0?'pos':'neg'; }
+  else if(l&&!cp){ el.value='No price set — go to Prices tab'; el.className=''; }
+  else { el.value=''; el.className=''; }
 }
-
 async function saveSale(){
   const date=document.getElementById('inp-date').value;
   const att=document.getElementById('inp-attendant').value;
@@ -550,57 +689,36 @@ async function saveSale(){
   if(!att){  showToast('Select an attendant'); return; }
   if(!litres||litres<=0){ showToast('Enter litres sold'); return; }
   if(!cp){ showToast('No price set for this date — add one in Prices tab'); return; }
-
-  const record={
-    id: uid(), date, attendant:att, shift,
-    litres, cost:cp.cost, sell:cp.sell,
-    priceId:cp.id, _pending:true
-  };
-
-  sales.push(record);
-  saveSalesLocal();
-  renderTodaySummary();
+  const rec={id:uid(),date,attendant:att,shift,litres,cost:cp.cost,sell:cp.sell,priceId:cp.id,_pending:true};
+  sales.push(rec); saveS(); renderTodaySummary();
   document.getElementById('inp-litres').value='';
   document.getElementById('preview-profit').value='';
   document.getElementById('preview-profit').className='';
   document.getElementById('inp-date').value=todayStr();
   showToast('Saved locally ✓');
-
-  // push to server
-  await pushSale(record);
+  await pushSale(rec);
 }
-
-async function pushSale(record){
+async function pushSale(rec){
   if(!cfg.apiUrl) return;
   setSyncDot('syncing');
   try{
-    const res=await apiFetch('POST',{action:'saveSale',data:record});
-    if(res.ok){
-      record._pending=false;
-      saveSalesLocal();
-      setSyncDot('ok');
-      updateQueueBanner();
-    } else throw new Error(res.error||'fail');
-  } catch(e){
-    // put in queue
-    if(!queue.find(q=>q.id===record.id)) queue.push(record);
-    saveQueueLocal();
-    updateQueueBanner();
-    setSyncDot('err');
+    const r=await apiFetch('POST',{action:'saveSale',data:rec});
+    if(r.ok||r.skipped){ rec._pending=false; saveS(); setSyncDot('ok'); updateQueueBanner(); }
+    else throw new Error(r.error||'fail');
+  }catch(e){
+    if(!queue.find(q=>q.id===rec.id)) queue.push(rec);
+    saveQ(); updateQueueBanner(); setSyncDot('err');
   }
 }
-
 function renderTodaySummary(){
-  const t=todayStr();
-  const ts=sales.filter(s=>s.date===t);
+  const t=todayStr(), ts=sales.filter(s=>s.date===t);
   document.getElementById('today-litres').textContent=(ts.reduce((a,s)=>a+s.litres,0)).toFixed(1);
   document.getElementById('today-profit').textContent=fmtShort(ts.reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0));
 }
 
-// ══ Sales Log ══════════════════════════════════════════════════════════════════
-function buildFilterOpts(elId){
-  const sel=document.getElementById(elId);
-  const cur=sel.value;
+// ══ Sales Log ═════════════════════════════════════════════════════════════════
+function buildFilterOpts(id){
+  const sel=document.getElementById(id), cur=sel.value;
   sel.innerHTML='<option value="">All time</option>'+allMonths().map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');
 }
 function renderSalesLog(){
@@ -612,49 +730,56 @@ function renderSalesLog(){
   document.getElementById('log-litres').textContent=tL.toFixed(1);
   document.getElementById('log-profit').textContent=fmtShort(tP);
   document.getElementById('log-period').textContent=filter?monthLabel(filter):'all time';
+
+  // Desktop table
+  const tbody=document.getElementById('sales-tbody');
+  // Mobile cards
   const list=document.getElementById('sales-list');
+
   if(!sorted.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3);">No sales yet</td></tr>`;
     list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>No sales yet</h3><p>Go to Record to add your first sale.</p></div>`;
     return;
   }
-  list.innerHTML=`<div class="section-label">Sales entries <span class="count-badge">${sorted.length}</span></div>`+
+  // Table rows (desktop)
+  tbody.innerHTML=sorted.map(s=>{
+    const p=(s.sell-s.cost)*s.litres;
+    const pending=s._pending?`<span class="badge badge-pending" style="margin-left:4px;">pending</span>`:'';
+    return `<tr>
+      <td>${s.date} ${pending}</td>
+      <td>${s.attendant}</td>
+      <td><span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span></td>
+      <td>${s.litres.toFixed(2)}</td>
+      <td>${fmt(s.cost)}</td>
+      <td>${fmt(s.sell)}</td>
+      <td>${fmtShort(s.litres*s.sell)}</td>
+      <td class="tbl-profit ${p>=0?'pos':'neg'}">UGX ${fmtShort(p)}</td>
+      <td><button class="sale-delete" onclick="deleteSale('${s.id}')" aria-label="Delete">×</button></td>
+    </tr>`;
+  }).join('');
+  // Card rows (mobile)
+  list.innerHTML=`<div class="section-label">Entries <span class="count-badge">${sorted.length}</span></div>`+
     sorted.map(s=>{
-      const profit=(s.sell-s.cost)*s.litres;
+      const p=(s.sell-s.cost)*s.litres;
       const pending=s._pending?`<span class="badge badge-pending">pending</span>`:'';
       return `<div class="sale-item">
         <div class="sale-top">
-          <div>
-            <div class="sale-date">${s.date} &nbsp;<span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span> ${pending}</div>
-            <div class="sale-att">${s.attendant}</div>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:8px;">
-            <div class="sale-profit ${profit>=0?'pos':'neg'}">UGX ${fmtShort(profit)}</div>
-            <button class="sale-delete" onclick="deleteSale('${s.id}')" aria-label="Delete">×</button>
-          </div>
+          <div><div class="sale-date">${s.date} <span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span> ${pending}</div><div class="sale-att">${s.attendant}</div></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;"><div class="sale-profit ${p>=0?'pos':'neg'}">UGX ${fmtShort(p)}</div><button class="sale-delete" onclick="deleteSale('${s.id}')">×</button></div>
         </div>
-        <div class="sale-meta">
-          <span>${s.litres.toFixed(2)} L</span>
-          <span>·</span><span>Cost ${fmt(s.cost)}/L</span>
-          <span>·</span><span>Sell ${fmt(s.sell)}/L</span>
-          <span>·</span><span style="color:var(--text2)">Rev ${fmtShort(s.litres*s.sell)}</span>
-        </div>
+        <div class="sale-meta"><span>${s.litres.toFixed(2)} L</span><span>·</span><span>Cost ${fmt(s.cost)}/L</span><span>·</span><span>Sell ${fmt(s.sell)}/L</span></div>
       </div>`;
     }).join('');
 }
-
 async function deleteSale(id){
   if(!confirm('Delete this record?')) return;
-  sales=sales.filter(s=>s.id!==id);
-  queue=queue.filter(q=>q.id!==id);
-  saveSalesLocal(); saveQueueLocal();
-  renderSalesLog(); renderTodaySummary(); updateQueueBanner();
-  if(cfg.apiUrl){
-    try{ await apiFetch('POST',{action:'deleteSale',id}); } catch(e){}
-  }
+  sales=sales.filter(s=>s.id!==id); queue=queue.filter(q=>q.id!==id);
+  saveS(); saveQ(); renderSalesLog(); renderTodaySummary(); updateQueueBanner();
+  if(cfg.apiUrl){ try{ await apiFetch('POST',{action:'deleteSale',id}); }catch(e){} }
   showToast('Deleted');
 }
 
-// ══ Profit Share ═══════════════════════════════════════════════════════════════
+// ══ Profit Share ══════════════════════════════════════════════════════════════
 let chartInst=null;
 function renderProfit(){
   const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
@@ -672,7 +797,7 @@ function renderProfit(){
   const months=allMonths().reverse();
   if(!months.length) return;
   const mData=months.map(m=>Math.round(sales.filter(s=>monthKey(s.date)===m).reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0)));
-  const mLabels=months.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('default',{month:'short'})+' '+y.slice(2);});
+  const mLabels=months.map(m=>{ const[y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short'})+' '+y.slice(2); });
   if(chartInst) chartInst.destroy();
   chartInst=new Chart(document.getElementById('profitChart'),{
     type:'bar',
@@ -683,92 +808,25 @@ function renderProfit(){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11},color:'#6B5E47'}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:'#9C8E7A',autoSkip:false}},
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:'#9C8E7A'}},
         y:{stacked:true,ticks:{callback:v=>fmtShort(v),font:{size:11},color:'#9C8E7A'},grid:{color:'rgba(0,0,0,0.05)'}}
       }
     }
   });
 }
 
-// ══ Prices page ════════════════════════════════════════════════════════════════
-document.getElementById('price-date').value=todayStr();
-['price-cost','price-sell'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',updateMarginPreview);
-});
-function updateMarginPreview(){
-  const c=parseFloat(document.getElementById('price-cost').value)||0;
-  const s=parseFloat(document.getElementById('price-sell').value)||0;
-  const el=document.getElementById('price-margin-preview');
-  if(c&&s){
-    const m=s-c, pct=(m/c*100);
-    el.value=`Margin: UGX ${fmt(m)}/L (${pct.toFixed(1)}%)`;
-    el.className=m>=0?'pos':'neg';
-  } else { el.value=''; el.className=''; }
-}
-
-async function saveNewPrice(){
-  const date=document.getElementById('price-date').value;
-  const cost=parseFloat(document.getElementById('price-cost').value);
-  const sell=parseFloat(document.getElementById('price-sell').value);
-  const note=document.getElementById('price-note').value.trim();
-  if(!date){ showToast('Select effective date'); return; }
-  if(!cost||cost<=0){ showToast('Enter cost price'); return; }
-  if(!sell||sell<=0){ showToast('Enter selling price'); return; }
-  const entry={id:uid(),effectiveDate:date,cost,sell,note};
-  prices.push(entry);
-  savePricesLocal();
-  renderPriceHistory();
-  updatePriceChip();
-  document.getElementById('price-cost').value='';
-  document.getElementById('price-sell').value='';
-  document.getElementById('price-note').value='';
-  document.getElementById('price-margin-preview').value='';
-  document.getElementById('price-date').value=todayStr();
-  showToast('Price set ✓');
-  if(cfg.apiUrl){
-    try{ await apiFetch('POST',{action:'savePrice',data:entry}); } catch(e){}
-  }
-}
-
-function renderPriceHistory(){
-  const sorted=[...prices].sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate)));
-  document.getElementById('price-count').textContent=sorted.length;
-  const list=document.getElementById('price-history-list');
-  if(!sorted.length){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">🏷️</div><h3>No prices set yet</h3><p>Set your first cost and selling price above.</p></div>`;
-    return;
-  }
-  const cp=currentPrice();
-  list.innerHTML=sorted.map((p,i)=>{
-    const isCurrent=cp&&cp.id===p.id;
-    const margin=p.sell-p.cost;
-    return `<div class="price-item">
-      <div class="price-top">
-        <div>
-          <div class="price-date">Effective: ${p.effectiveDate}</div>
-          ${p.note?`<div class="price-note">${p.note}</div>`:''}
-        </div>
-        ${isCurrent?'<span class="price-current-badge">Current</span>':''}
-      </div>
-      <div class="price-vals">
-        <div class="price-val">Cost: <span>${fmt(p.cost)}/L</span></div>
-        <div class="price-val">Sell: <span>${fmt(p.sell)}/L</span></div>
-        <div class="price-val">Margin: <span style="color:${margin>=0?'var(--teal)':'var(--red)'}">${fmt(margin)}/L</span></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ══ Settings page ══════════════════════════════════════════════════════════════
+// ══ Settings ══════════════════════════════════════════════════════════════════
 function renderSettings(){
   document.getElementById('set-api').value=cfg.apiUrl||'';
   document.getElementById('set-name-a').value=cfg.nameA||'';
   document.getElementById('set-name-b').value=cfg.nameB||'';
   renderAttList();
 }
-function onApiUrlChange(){
-  cfg.apiUrl=document.getElementById('set-api').value.trim();
-  localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
+function onApiUrlChange(){ cfg.apiUrl=document.getElementById('set-api').value.trim(); saveCfg(); }
+function saveLocalSettings(){
+  cfg.nameA=document.getElementById('set-name-a').value.trim()||'Partner A';
+  cfg.nameB=document.getElementById('set-name-b').value.trim()||'Partner B';
+  saveCfg(); pushSettingsToServer();
 }
 function renderAttList(){
   const el=document.getElementById('att-list');
@@ -776,193 +834,132 @@ function renderAttList(){
   el.innerHTML=cfg.attendants.map((a,i)=>`<div class="att-item"><span>${a}</span><button class="btn-icon btn-del" onclick="removeAttendant(${i})">×</button></div>`).join('');
 }
 function addAttendant(){
-  const inp=document.getElementById('att-inp');
-  const name=inp.value.trim();
+  const inp=document.getElementById('att-inp'), name=inp.value.trim();
   if(!name) return;
   if(cfg.attendants.includes(name)){ showToast('Already exists'); return; }
-  cfg.attendants.push(name);
-  localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
-  inp.value='';
-  renderAttList();
-  pushSettingsToServer();
-  showToast('Attendant added');
+  cfg.attendants.push(name); saveCfg(); inp.value=''; renderAttList(); populateAttDropdown(); pushSettingsToServer(); showToast('Attendant added');
 }
 document.getElementById('att-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') addAttendant(); });
-function removeAttendant(i){
-  cfg.attendants.splice(i,1);
-  localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
-  renderAttList();
-  pushSettingsToServer();
-}
-function clearLocalData(){
-  if(!confirm('Clear all local data? This does not delete anything from Google Sheets.')) return;
-  sales=[]; prices=[]; queue=[];
-  saveSalesLocal(); savePricesLocal(); saveQueueLocal();
-  renderTodaySummary(); updateQueueBanner();
-  showToast('Local cache cleared');
-}
+function removeAttendant(i){ cfg.attendants.splice(i,1); saveCfg(); renderAttList(); populateAttDropdown(); pushSettingsToServer(); }
+function clearLocalData(){ if(!confirm('Clear all local cache?')) return; sales=[]; prices=[]; queue=[]; saveS(); saveP(); saveQ(); renderTodaySummary(); updateQueueBanner(); showToast('Cache cleared'); }
 
-// ══ API / sync ══════════════════════════════════════════════════════════════════
+// ══ API helpers ═══════════════════════════════════════════════════════════════
 async function apiFetch(method, body=null, params=null){
-  let url=cfg.apiUrl;
-  if(params){
-    const qs=new URLSearchParams(params).toString();
-    url=url+'?'+qs;
-  }
-  const opts={ method, headers:{'Content-Type':'application/json'} };
+  let url=cfg.apiUrl||API_URL;
+  if(params) url+='?'+new URLSearchParams(params).toString();
+  const opts={method,headers:{'Content-Type':'application/json'}};
   if(body) opts.body=JSON.stringify(body);
-  const res=await fetch(url, opts);
+  const res=await fetch(url,opts);
+  if(!res.ok) throw new Error('HTTP '+res.status);
   return res.json();
 }
-
 async function testApi(){
-  const url=document.getElementById('set-api').value.trim();
-  if(!url){ showToast('Enter API URL first'); return; }
-  cfg.apiUrl=url;
-  localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
+  const url=(document.getElementById('set-api').value.trim())||API_URL;
+  cfg.apiUrl=url; saveCfg();
   const el=document.getElementById('api-status-msg');
-  el.className='api-status checking'; el.textContent='Checking…'; el.style.display='block';
+  el.className='api-status checking'; el.textContent='Checking connection…'; el.style.display='block';
   setSyncDot('syncing');
   try{
     const r=await apiFetch('GET',null,{action:'ping'});
-    if(r.ok){
-      el.className='api-status ok'; el.textContent='✓ Connected — backend is responding.';
-      setSyncDot('ok');
-    } else throw new Error(r.error||'bad response');
-  }catch(e){
-    el.className='api-status err'; el.textContent='✗ Failed: '+e.message;
-    setSyncDot('err');
-  }
+    if(r.ok){ el.className='api-status ok'; el.textContent='✓ Connected — backend is responding correctly.'; setSyncDot('ok'); }
+    else throw new Error(r.error||'Unexpected response');
+  }catch(e){ el.className='api-status err'; el.textContent='✗ Failed: '+e.message+'. Check the URL and that the script is deployed as a web app (Anyone).'; setSyncDot('err'); }
 }
-
 async function fullSync(){
-  if(!cfg.apiUrl){ showToast('Set API URL first'); return; }
-  setSyncDot('syncing');
-  showToast('Syncing…');
+  if(!cfg.apiUrl){ showToast('Set API URL in Settings'); return; }
+  setSyncDot('syncing'); showToast('Syncing…');
   try{
     // pull sales
     const sr=await apiFetch('GET',null,{action:'getSales'});
-    if(sr.sales){
-      // merge server records not in local
-      sr.sales.forEach(s=>{
-        if(!sales.find(l=>String(l.id)===String(s.ID||s.id))){
-          sales.push({
-            id:s.ID||s.id, date:s.Date||s.date, attendant:s.Attendant||s.attendant,
-            shift:s.Shift||s.shift, litres:parseFloat(s.Litres||s.litres),
-            cost:parseFloat(s.CostPerL||s.cost), sell:parseFloat(s.SellPerL||s.sell),
-            _pending:false
-          });
-        }
-      });
-      saveSalesLocal();
-    }
+    if(sr.sales) sr.sales.forEach(s=>{
+      const id=s.ID||s.id;
+      if(!sales.find(l=>String(l.id)===String(id))){
+        sales.push({id,date:s.Date||s.date,attendant:s.Attendant||s.attendant,shift:s.Shift||s.shift,
+          litres:parseFloat(s.Litres||s.litres),cost:parseFloat(s.CostPerL||s.cost),sell:parseFloat(s.SellPerL||s.sell),_pending:false});
+      }
+    });
+    saveS();
     // pull prices
     const pr=await apiFetch('GET',null,{action:'getPrices'});
-    if(pr.prices){
-      pr.prices.forEach(p=>{
-        if(!prices.find(l=>String(l.id)===String(p.ID||p.id))){
-          prices.push({
-            id:p.ID||p.id, effectiveDate:p.EffectiveDate||p.effectiveDate,
-            cost:parseFloat(p.CostPerL||p.cost), sell:parseFloat(p.SellPerL||p.sell),
-            note:p.Note||p.note||''
-          });
-        }
-      });
-      savePricesLocal();
-    }
+    if(pr.prices) pr.prices.forEach(p=>{
+      const id=p.ID||p.id;
+      if(!prices.find(l=>String(l.id)===String(id))){
+        prices.push({id,effectiveDate:p.EffectiveDate||p.effectiveDate,
+          cost:parseFloat(p.CostPerL||p.cost),sell:parseFloat(p.SellPerL||p.sell),note:p.Note||p.note||''});
+      }
+    });
+    saveP();
     // pull settings
-    const stg=await apiFetch('GET',null,{action:'getSettings'});
-    if(stg.settings){
-      const s=stg.settings;
+    const sg=await apiFetch('GET',null,{action:'getSettings'});
+    if(sg.settings){
+      const s=sg.settings;
       if(s.nameA) cfg.nameA=s.nameA;
       if(s.nameB) cfg.nameB=s.nameB;
-      if(s.attendants) cfg.attendants=s.attendants?s.attendants.split(',').filter(Boolean):cfg.attendants;
-      localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
+      if(s.attendants) cfg.attendants=s.attendants.split(',').filter(Boolean);
+      saveCfg();
     }
     // flush queue
     await flushQueue();
-    setSyncDot('ok');
-    showToast('Sync complete ✓');
-    // refresh current page
-    switchPage(document.querySelector('.nav-btn.active').id.replace('nav-',''));
-  }catch(e){
-    setSyncDot('err');
-    showToast('Sync failed: '+e.message);
-  }
+    setSyncDot('ok'); showToast('Sync complete ✓');
+    // refresh current active page
+    const active=document.querySelector('.nav-btn.active,.side-btn.active');
+    if(active){ const p=active.id.replace('nav-','').replace('side-',''); switchPage(p); }
+  }catch(e){ setSyncDot('err'); showToast('Sync failed: '+e.message); }
 }
-
 async function flushQueue(){
   if(!queue.length||!cfg.apiUrl) return;
   setSyncDot('syncing');
-  const toSend=[...queue];
   try{
-    const r=await apiFetch('POST',{action:'syncBatch',records:toSend});
-    if(r.ok){
-      // mark as not pending
-      toSend.forEach(q=>{ const s=sales.find(x=>x.id===q.id); if(s) s._pending=false; });
-      queue=[];
-      saveSalesLocal(); saveQueueLocal();
-      updateQueueBanner();
-      setSyncDot('ok');
-    }
+    const r=await apiFetch('POST',{action:'syncBatch',records:[...queue]});
+    if(r.ok){ queue.forEach(q=>{ const s=sales.find(x=>x.id===q.id); if(s) s._pending=false; }); queue=[]; saveS(); saveQ(); updateQueueBanner(); setSyncDot('ok'); }
   }catch(e){ setSyncDot('err'); }
 }
-
-function updateQueueBanner(){
-  const b=document.getElementById('queue-banner');
-  const n=queue.length;
-  if(n>0){
-    document.getElementById('queue-msg').textContent=`⏳ ${n} record${n>1?'s':''} pending sync`;
-    b.classList.add('on');
-  } else {
-    b.classList.remove('on');
-  }
-}
-
 async function pushSettingsToServer(){
   if(!cfg.apiUrl) return;
-  try{
-    await apiFetch('POST',{action:'saveSettings',data:{
-      nameA:cfg.nameA, nameB:cfg.nameB,
-      attendants:cfg.attendants.join(',')
-    }});
-  }catch(e){}
+  try{ await apiFetch('POST',{action:'saveSettings',data:{nameA:cfg.nameA,nameB:cfg.nameB,attendants:cfg.attendants.join(',')}}); }catch(e){}
+}
+function updateQueueBanner(){
+  const b=document.getElementById('queue-banner'), n=queue.length;
+  if(n>0){ document.getElementById('queue-msg').textContent=`⏳ ${n} record${n>1?'s':''} pending sync`; b.classList.add('on'); }
+  else b.classList.remove('on');
 }
 
-// ══ Export CSV ══════════════════════════════════════════════════════════════════
+// ══ Export ════════════════════════════════════════════════════════════════════
 function exportCSV(){
   if(!sales.length){ showToast('No data to export'); return; }
-  const header='Date,Attendant,Shift,Litres,Cost/L,Sell/L,Revenue,GrossProfit';
+  const h='Date,Attendant,Shift,Litres,Cost/L,Sell/L,Revenue,GrossProfit';
   const rows=sales.sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(s=>{
     const p=(s.sell-s.cost)*s.litres;
     return [s.date,s.attendant,s.shift,s.litres.toFixed(2),s.cost,s.sell,(s.litres*s.sell).toFixed(0),p.toFixed(0)].join(',');
   });
-  const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='petrol-sales.csv'; a.click();
-  showToast('CSV exported');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([[h,...rows].join('\n')],{type:'text/csv'}));
+  a.download='petrol-sales.csv'; a.click(); showToast('CSV exported');
 }
 
-// ══ Offline ════════════════════════════════════════════════════════════════════
+// ══ Offline ═══════════════════════════════════════════════════════════════════
 function updOnline(){
-  document.getElementById('offline-pill').classList.toggle('on',!navigator.onLine);
-  if(navigator.onLine && queue.length) flushQueue();
+  const off=!navigator.onLine;
+  document.getElementById('offline-pill').classList.toggle('on',off);
+  const sp=document.getElementById('offline-pill-side');
+  if(sp) sp.style.display=off?'block':'none';
+  if(!off&&queue.length) flushQueue();
 }
 window.addEventListener('online',updOnline);
 window.addEventListener('offline',updOnline);
 updOnline();
 
-// ══ Service worker ═════════════════════════════════════════════════════════════
+// ══ Service worker ════════════════════════════════════════════════════════════
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-// ══ Init ═══════════════════════════════════════════════════════════════════════
+// ══ Init ══════════════════════════════════════════════════════════════════════
 loadAll();
+applyLayout();
 populateAttDropdown();
 renderTodaySummary();
 updatePriceChip();
 updateQueueBanner();
-// auto-sync on load if online
-if(navigator.onLine && cfg.apiUrl) fullSync();
+if(navigator.onLine&&cfg.apiUrl) fullSync();
 </script>
 </body>
 </html>
