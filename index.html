@@ -27,7 +27,7 @@
   --text:#E8F4FD;--text2:#94B8D4;--text3:#4A7A9B;
   --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
   --radius:12px;--radius-sm:8px;
-  --nav-h:64px;--header-h:56px;
+  --nav-h:68px;--header-h:58px;
   --sidebar-w:220px;
 }
 /* ── NEON GLOW EFFECTS ── */
@@ -156,8 +156,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 .page.active{display:block;}
 
 .bottom-nav{height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;z-index:10;}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--font);font-size:10px;font-weight:500;}
-.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--text3);font-family:var(--font);font-size:11px;font-weight:500;padding:8px 4px;}
+.nav-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;}
 .nav-btn.active{color:#4FC3F7;}
 .nav-btn.active svg{stroke-width:2.2;filter:drop-shadow(0 0 4px rgba(79,195,247,0.6));}
 
@@ -522,7 +522,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ══ Constants ════════════════════════════════════════════════════════════════
-const API_URL = ''; // Set your URL in Settings tab
+// Paste your current Apps Script deployment URL here:
+const API_URL = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
 const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2' };
 const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', settings:'Settings' };
 
@@ -975,7 +976,28 @@ window.addEventListener('offline',updOnline);
 updOnline();
 
 // ══ Service worker ════════════════════════════════════════════════════════════
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+// ══ Service worker — auto-update on every load ════════════════════════════════
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // Check for updates immediately
+    reg.update();
+    // When a new SW is waiting, activate it immediately
+    reg.addEventListener('updatefound',()=>{
+      const newSW=reg.installing;
+      newSW.addEventListener('statechange',()=>{
+        if(newSW.state==='installed' && navigator.serviceWorker.controller){
+          // New version ready — reload to get fresh content
+          newSW.postMessage({type:'SKIP_WAITING'});
+        }
+      });
+    });
+  }).catch(()=>{});
+  // When SW activates (takes control), reload once to get latest files
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!refreshing){ refreshing=true; window.location.reload(); }
+  });
+}
 
 // ══ Init ══════════════════════════════════════════════════════════════════════
 loadAll();
