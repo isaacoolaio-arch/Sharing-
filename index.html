@@ -645,14 +645,26 @@ async function saveNewPrice(){
   if(!cost||cost<=0){ showToast('Enter cost price'); return; }
   if(!sell||sell<=0){ showToast('Enter selling price'); return; }
   const entry={id:uid(),effectiveDate:date,cost,sell,note};
-  prices.push(entry); saveP(); renderPriceHistory(); updatePriceChip();
+  prices.push(entry); saveP();
+  renderPriceHistory();
+  updatePriceChip(); // update Record tab immediately
   document.getElementById('price-cost').value='';
   document.getElementById('price-sell').value='';
   document.getElementById('price-note').value='';
   document.getElementById('price-margin').value='';
   document.getElementById('price-date').value=todayStr();
   showToast('Price set ✓');
-  if(cfg.apiUrl){ try{ await apiFetchWithData('savePrice', entry); setSyncDot('ok'); }catch(e){ setSyncDot('err'); } }
+  if(cfg.apiUrl){
+    setSyncDot('syncing');
+    try{
+      await apiFetchWithData('savePrice', entry);
+      setSyncDot('ok');
+      showToast('Price saved to sheet ✓');
+    }catch(e){
+      setSyncDot('err');
+      showToast('Saved locally — will sync when online');
+    }
+  }
 }
 function renderPriceHistory(){
   const sorted=pricesSorted();
@@ -901,28 +913,43 @@ async function testApi(){
     setSyncDot('err');
   }
 }
-async function fullSync(){
-  if(!cfg.apiUrl){ showToast('Set API URL in Settings first'); return; }
-  setSyncDot('syncing'); showToast('Syncing…');
+async function fullSync(silent=false){
+  if(!cfg.apiUrl){ if(!silent) showToast('Set API URL in Settings first'); return; }
+  if(!silent){ setSyncDot('syncing'); showToast('Syncing…'); }
+  else setSyncDot('syncing');
   try{
+    // Pull prices first — needed before sales render
+    const pr=await apiFetch('getPrices');
+    if(pr.prices){
+      pr.prices.forEach(p=>{
+        const id=String(p.ID||p.id);
+        if(!prices.find(l=>String(l.id)===id)){
+          prices.push({id,
+            effectiveDate:String(p.EffectiveDate||p.effectiveDate||'').slice(0,10),
+            cost:parseFloat(p.CostPerL||p.cost),
+            sell:parseFloat(p.SellPerL||p.sell),
+            note:p.Note||p.note||''});
+        }
+      });
+      saveP();
+    }
+    // Pull sales
     const sr=await apiFetch('getSales');
     if(sr.sales) sr.sales.forEach(s=>{
-      const id=s.ID||s.id;
-      if(!sales.find(l=>String(l.id)===String(id))){
-        sales.push({id,date:s.Date||s.date,attendant:s.Attendant||s.attendant,shift:s.Shift||s.shift,
-          litres:parseFloat(s.Litres||s.litres),cost:parseFloat(s.CostPerL||s.cost),sell:parseFloat(s.SellPerL||s.sell),_pending:false});
+      const id=String(s.ID||s.id);
+      if(!sales.find(l=>String(l.id)===id)){
+        sales.push({id,
+          date:String(s.Date||s.date||'').slice(0,10),
+          attendant:s.Attendant||s.attendant,
+          shift:s.Shift||s.shift,
+          litres:parseFloat(s.Litres||s.litres),
+          cost:parseFloat(s.CostPerL||s.cost),
+          sell:parseFloat(s.SellPerL||s.sell),
+          _pending:false});
       }
     });
     saveS();
-    const pr=await apiFetch('getPrices');
-    if(pr.prices) pr.prices.forEach(p=>{
-      const id=p.ID||p.id;
-      if(!prices.find(l=>String(l.id)===String(id))){
-        prices.push({id,effectiveDate:p.EffectiveDate||p.effectiveDate,
-          cost:parseFloat(p.CostPerL||p.cost),sell:parseFloat(p.SellPerL||p.sell),note:p.Note||p.note||''});
-      }
-    });
-    saveP();
+    // Pull settings
     const sg=await apiFetch('getSettings');
     if(sg.settings){
       const s=sg.settings;
@@ -932,10 +959,15 @@ async function fullSync(){
       saveCfg();
     }
     await flushQueue();
-    setSyncDot('ok'); showToast('Sync complete ✓');
+    setSyncDot('ok');
+    if(!silent) showToast('Sync complete ✓');
+    // Refresh all UI after sync
+    updatePriceChip();
+    renderTodaySummary();
+    populateAttDropdown();
     const active=document.querySelector('.nav-btn.active,.side-btn.active');
     if(active){ const p=active.id.replace('nav-','').replace('side-',''); switchPage(p); }
-  }catch(e){ setSyncDot('err'); showToast('Sync failed: '+e.message); }
+  }catch(e){ setSyncDot('err'); if(!silent) showToast('Sync failed: '+e.message); }
 }
 async function flushQueue(){
   if(!queue.length||!cfg.apiUrl) return;
@@ -968,16 +1000,20 @@ function exportCSV(){
   a.download='petrol-sales.csv'; a.click(); showToast('CSV exported');
 }
 
-// ══ Offline ═══════════════════════════════════════════════════════════════════
+// ══ Offline / online ══════════════════════════════════════════════════════════
 function updOnline(){
   const off=!navigator.onLine;
   document.getElementById('offline-pill').classList.toggle('on',off);
   const sp=document.getElementById('offline-pill-side');
   if(sp) sp.style.display=off?'block':'none';
-  if(!off&&queue.length) flushQueue();
+  if(!off && cfg.apiUrl){
+    // came back online — silent sync to pull any missing data
+    flushQueue();
+    fullSync(true);
+  }
 }
-window.addEventListener('online',updOnline);
-window.addEventListener('offline',updOnline);
+window.addEventListener('online', updOnline);
+window.addEventListener('offline', updOnline);
 updOnline();
 
 // ══ Service worker ════════════════════════════════════════════════════════════
@@ -1011,7 +1047,8 @@ populateAttDropdown();
 renderTodaySummary();
 updatePriceChip();
 updateQueueBanner();
-if(navigator.onLine&&cfg.apiUrl) fullSync();
+// Silent background sync on load — updates prices, sales, settings without interrupting
+if(navigator.onLine && cfg.apiUrl) fullSync(true);
 </script>
 </body>
 </html>
