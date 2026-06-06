@@ -644,7 +644,7 @@ async function saveNewPrice(){
   document.getElementById('price-margin').value='';
   document.getElementById('price-date').value=todayStr();
   showToast('Price set ✓');
-  if(cfg.apiUrl){ try{ await apiFetch('POST',{action:'savePrice',data:entry}); setSyncDot('ok'); }catch(e){ setSyncDot('err'); } }
+  if(cfg.apiUrl){ try{ await apiFetchWithData('savePrice', entry); setSyncDot('ok'); }catch(e){ setSyncDot('err'); } }
 }
 function renderPriceHistory(){
   const sorted=pricesSorted();
@@ -706,7 +706,7 @@ async function pushSale(rec){
   if(!cfg.apiUrl) return;
   setSyncDot('syncing');
   try{
-    const r=await apiFetch('POST',{action:'saveSale',data:rec});
+    const r=await apiFetchWithData('saveSale', rec);
     if(r.ok||r.skipped){ rec._pending=false; saveS(); setSyncDot('ok'); updateQueueBanner(); }
     else throw new Error(r.error||'fail');
   }catch(e){
@@ -779,7 +779,7 @@ async function deleteSale(id){
   if(!confirm('Delete this record?')) return;
   sales=sales.filter(s=>s.id!==id); queue=queue.filter(q=>q.id!==id);
   saveS(); saveQ(); renderSalesLog(); renderTodaySummary(); updateQueueBanner();
-  if(cfg.apiUrl){ try{ await apiFetch('POST',{action:'deleteSale',id}); }catch(e){} }
+  if(cfg.apiUrl){ try{ await apiFetch('deleteSale',{id}); }catch(e){} }
   showToast('Deleted');
 }
 
@@ -859,14 +859,21 @@ document.getElementById('att-inp').addEventListener('keydown',e=>{ if(e.key==='E
 function removeAttendant(i){ cfg.attendants.splice(i,1); saveCfg(); renderAttList(); populateAttDropdown(); pushSettingsToServer(); }
 function clearLocalData(){ if(!confirm('Clear all local cache?')) return; sales=[]; prices=[]; queue=[]; saveS(); saveP(); saveQ(); renderTodaySummary(); updateQueueBanner(); showToast('Cache cleared'); }
 
-// ══ API helpers ═══════════════════════════════════════════════════════════════
-async function apiFetch(method, body=null, params=null){
-  let url=cfg.apiUrl||API_URL;
-  if(params) url+='?'+new URLSearchParams(params).toString();
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(body) opts.body=JSON.stringify(body);
-  const res=await fetch(url,opts);
-  if(!res.ok) throw new Error('HTTP '+res.status);
+// ── API helpers (all GET — avoids CORS preflight) ═════════════════════════════
+async function apiFetch(action, params={}) {
+  const url = cfg.apiUrl;
+  if(!url) throw new Error('No API URL configured — go to Settings');
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const res = await fetch(url + '?' + qs);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+async function apiFetchWithData(action, data) {
+  const url = cfg.apiUrl;
+  if(!url) throw new Error('No API URL configured — go to Settings');
+  const qs = new URLSearchParams({ action, data: JSON.stringify(data) }).toString();
+  const res = await fetch(url + '?' + qs);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
 async function testApi(){
@@ -887,11 +894,10 @@ async function testApi(){
   }
 }
 async function fullSync(){
-  if(!cfg.apiUrl){ showToast('Set API URL in Settings'); return; }
+  if(!cfg.apiUrl){ showToast('Set API URL in Settings first'); return; }
   setSyncDot('syncing'); showToast('Syncing…');
   try{
-    // pull sales
-    const sr=await apiFetch('GET',null,{action:'getSales'});
+    const sr=await apiFetch('getSales');
     if(sr.sales) sr.sales.forEach(s=>{
       const id=s.ID||s.id;
       if(!sales.find(l=>String(l.id)===String(id))){
@@ -900,8 +906,7 @@ async function fullSync(){
       }
     });
     saveS();
-    // pull prices
-    const pr=await apiFetch('GET',null,{action:'getPrices'});
+    const pr=await apiFetch('getPrices');
     if(pr.prices) pr.prices.forEach(p=>{
       const id=p.ID||p.id;
       if(!prices.find(l=>String(l.id)===String(id))){
@@ -910,8 +915,7 @@ async function fullSync(){
       }
     });
     saveP();
-    // pull settings
-    const sg=await apiFetch('GET',null,{action:'getSettings'});
+    const sg=await apiFetch('getSettings');
     if(sg.settings){
       const s=sg.settings;
       if(s.nameA) cfg.nameA=s.nameA;
@@ -919,10 +923,8 @@ async function fullSync(){
       if(s.attendants) cfg.attendants=s.attendants.split(',').filter(Boolean);
       saveCfg();
     }
-    // flush queue
     await flushQueue();
     setSyncDot('ok'); showToast('Sync complete ✓');
-    // refresh current active page
     const active=document.querySelector('.nav-btn.active,.side-btn.active');
     if(active){ const p=active.id.replace('nav-','').replace('side-',''); switchPage(p); }
   }catch(e){ setSyncDot('err'); showToast('Sync failed: '+e.message); }
@@ -931,13 +933,13 @@ async function flushQueue(){
   if(!queue.length||!cfg.apiUrl) return;
   setSyncDot('syncing');
   try{
-    const r=await apiFetch('POST',{action:'syncBatch',records:[...queue]});
+    const r=await apiFetchWithData('syncBatch', queue);
     if(r.ok){ queue.forEach(q=>{ const s=sales.find(x=>x.id===q.id); if(s) s._pending=false; }); queue=[]; saveS(); saveQ(); updateQueueBanner(); setSyncDot('ok'); }
   }catch(e){ setSyncDot('err'); }
 }
 async function pushSettingsToServer(){
   if(!cfg.apiUrl) return;
-  try{ await apiFetch('POST',{action:'saveSettings',data:{nameA:cfg.nameA,nameB:cfg.nameB,attendants:cfg.attendants.join(',')}}); }catch(e){}
+  try{ await apiFetchWithData('saveSettings',{nameA:cfg.nameA,nameB:cfg.nameB,attendants:cfg.attendants.join(',')}); }catch(e){}
 }
 function updateQueueBanner(){
   const b=document.getElementById('queue-banner'), n=queue.length;
