@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260608-nosaveguard -->
+<!-- Petrol Tracker v6 — build 20260608-editexp -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1793,9 +1793,15 @@ async function deleteSale(id){
 // ══ EDIT — SALE ═══════════════════════════════════════════════════════════════
 function openEditSale(id){
   if(!requireEditing("sales")) return;
-  const s=sales.find(x=>x.id===id);
-  if(!s) return;
+  const s=sales.find(x=>x.id===id); if(!s) return;
   editingType='sale'; editingId=id;
+  // Load linked expenses (deductions from transactions that reference this sale)
+  const linkedExp = transactions.filter(t=>
+    t.type==='deduction' &&
+    t.note && t.note.includes(s.date) &&
+    t.note.includes(s.attendant) &&
+    t.note.startsWith('[Shift expense]')
+  );
   document.getElementById('edit-modal-title').textContent='Edit Sale';
   document.getElementById('edit-modal-body').innerHTML=`
     <div class="grid-2">
@@ -1810,13 +1816,54 @@ function openEditSale(id){
     </select></div>
     <div class="grid-2">
       <div class="field"><label>Litres</label><input type="number" id="em-litres" value="${s.litres}" step="0.01" inputmode="decimal"></div>
-      <div class="field"><label>Shift</label></div>
+      <div class="field"><label>Profit preview</label><input type="text" id="em-preview" readonly value="UGX ${fmt((s.sell-s.cost)*s.litres)}"></div>
     </div>
     <div class="grid-2">
       <div class="field"><label>Cost/L (UGX)</label><input type="number" id="em-cost" value="${s.cost}" inputmode="numeric"></div>
       <div class="field"><label>Sell/L (UGX)</label><input type="number" id="em-sell" value="${s.sell}" inputmode="numeric"></div>
+    </div>
+    <div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">Shift expenses (${linkedExp.length})</div>
+      <div id="em-exp-list">
+        ${linkedExp.length===0
+          ? `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">No expenses linked to this sale.</div>`
+          : linkedExp.map(e=>`
+            <div class="shift-exp-item" id="em-exp-${e.id}">
+              <div class="shift-exp-item-body">
+                <div class="shift-exp-item-desc">${e.note.replace('[Shift expense] ','').split(' — ')[0]}</div>
+                <div class="shift-exp-item-meta">Deduct from: ${e.partnerName||e.partner}</div>
+              </div>
+              <div class="shift-exp-item-amt">- UGX ${fmt(e.amount)}</div>
+              <button class="shift-exp-item-del" onclick="deleteEditExpense('${e.id}')">×</button>
+            </div>`).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">To add new expenses to this sale, delete it and re-record with expenses.</div>
     </div>`;
+  // Update profit preview on litres/price change
+  setTimeout(()=>{
+    ['em-litres','em-cost','em-sell'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener('input',()=>{
+        const l=parseFloat(document.getElementById('em-litres').value)||0;
+        const c=parseFloat(document.getElementById('em-cost').value)||0;
+        const sv=parseFloat(document.getElementById('em-sell').value)||0;
+        const pv=document.getElementById('em-preview');
+        if(pv) pv.value='UGX '+fmt((sv-c)*l);
+      });
+    });
+  },50);
   openModal();
+}
+
+async function deleteEditExpense(txId){
+  if(!confirm('Remove this expense?')) return;
+  transactions=transactions.filter(t=>t.id!==txId);
+  saveTx();
+  const row=document.getElementById('em-exp-'+txId);
+  if(row) row.remove();
+  if(cfg.apiUrl){ apiFetch('deleteTransaction',{id:txId}).catch(()=>{}); }
+  showToast('Expense removed');
+  addLog('Shift expense removed from sale','warning');
 }
 async function saveEditSale(){
   const s=sales.find(x=>x.id===editingId); if(!s) return;
