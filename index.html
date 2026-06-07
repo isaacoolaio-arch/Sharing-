@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v5 — build 20260607 -->
+<!-- Petrol Tracker v5 — build 20260607b -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -494,6 +494,19 @@ function clearLog(){ if(!confirm('Clear all log entries?')) return; actLog=[]; s
 const fmt=(n,dp=0)=>(parseFloat(n)||0).toLocaleString('en-UG',{minimumFractionDigits:dp,maximumFractionDigits:dp});
 function fmtShort(n){ const a=Math.abs(n); if(a>=1e6) return (n/1e6).toFixed(1)+'M'; if(a>=1e3) return (n/1e3).toFixed(0)+'K'; return fmt(n); }
 const todayStr=()=>new Date().toISOString().slice(0,10);
+// safeDate: always returns YYYY-MM-DD, never shifts timezone
+function safeDate(val){
+  if(!val) return '';
+  const s=String(val).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;           // already correct
+  if(s.includes('T')) return s.slice(0,10);               // ISO with time — just strip
+  const p=s.split(/[\/\-]/);
+  if(p.length===3){
+    if(p[0].length===4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+    return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  }
+  return s.replace(/T.*/,'').trim().slice(0,10);
+}
 const monthKey=d=>String(d).slice(0,7);
 const monthLabel=ym=>{ const[y,m]=ym.split('-'); return new Date(y,m-1).toLocaleString('default',{month:'long',year:'numeric'}); };
 const allMonths=()=>[...new Set(sales.map(s=>monthKey(s.date)))].sort().reverse();
@@ -943,7 +956,7 @@ async function fullSync(silent=false){
     if(pr.prices){
       const serverPrices=pr.prices.map(p=>({
         id:            String(p.ID||p.id||''),
-        effectiveDate: String(p.EffectiveDate||p.effectiveDate||'').replace(/T.*/,'').trim(),
+        effectiveDate: safeDate(p.EffectiveDate||p.effectiveDate),
         cost:          parseFloat(p.CostPerL||p.cost||0),
         sell:          parseFloat(p.SellPerL||p.sell||0),
         note:          String(p.Note||p.note||'')
@@ -962,7 +975,7 @@ async function fullSync(silent=false){
     if(sr.sales){
       const serverSales=sr.sales.map(s=>({
         id:        String(s.ID||s.id||''),
-        date:      String(s.Date||s.date||'').replace(/T.*/,'').trim(),
+        date:      safeDate(s.Date||s.date),
         attendant: String(s.Attendant||s.attendant||''),
         shift:     String(s.Shift||s.shift||'Day'),
         litres:    parseFloat(s.Litres||s.litres||0),
