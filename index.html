@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-url-setup -->
+<!-- Petrol Tracker v6 — build 20260607-usersync2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -650,8 +650,9 @@ let session = null; // {userId, name, role, loginTime}
 
 function loadUsers(){
   try{ users=JSON.parse(localStorage.getItem(K.USERS)||'[]'); }catch(e){ users=[]; }
-  // Seed default admin if no users at all
-  if(!users.length){
+  // Only seed default admin if localStorage has never been set at all
+  // (K.USERS key doesn't exist) — don't overwrite if empty after a failed sync
+  if(localStorage.getItem(K.USERS)===null){
     users=[{id:'admin_default',name:'Admin',role:'admin',pin:'1234'}];
     saveUsers();
   }
@@ -693,17 +694,18 @@ let pinBuffer = '';
 let loginTarget = null; // user being logged in
 
 async function initLogin(){
-  loadUsers(); loadSession();
+  loadUsers();
+  loadSession();
   // Get best available API URL
   const savedSettings = (() => { try{ return JSON.parse(localStorage.getItem(K.SETTINGS)||'{}'); }catch(e){ return {}; } })();
   const apiUrl = savedSettings.apiUrl || DEFAULT_API;
-  // If no real URL saved yet (new device), show URL setup first
-  if(!savedSettings.apiUrl && !DEFAULT_API){
+  // If absolutely no URL anywhere, show URL setup screen
+  if(!apiUrl){
     showUrlSetup();
     return;
   }
-  // Try to pull latest users from server
-  if(navigator.onLine && apiUrl){
+  // Always try to pull latest users from server (keeps all devices in sync)
+  if(navigator.onLine){
     try{
       const res = await fetch(apiUrl + '?action=getUsers');
       if(res.ok){
@@ -711,14 +713,21 @@ async function initLogin(){
         if(data.users && data.users.length > 0){
           users = data.users.filter(u => u.id && u.name && u.role && u.pin);
           saveUsers();
-          // Also save the working URL so future loads use it
-          const s = savedSettings;
-          s.apiUrl = apiUrl;
-          localStorage.setItem(K.SETTINGS, JSON.stringify(s));
+          // Save the working URL
+          if(!savedSettings.apiUrl){
+            savedSettings.apiUrl = apiUrl;
+            localStorage.setItem(K.SETTINGS, JSON.stringify(savedSettings));
+          }
         }
       }
     }catch(e){ /* offline — use cached users */ }
   }
+  // If still no users at all, seed default
+  if(!users.length){
+    users=[{id:'admin_default',name:'Admin',role:'admin',pin:'1234'}];
+    saveUsers();
+  }
+  // Check session validity
   if(session && users.find(u => u.id === session.userId)){
     enterApp();
   } else {
@@ -832,10 +841,23 @@ function enterApp(){
   renderTodaySummary();
   updatePriceChip();
   updateQueueBanner();
+  addLog(`Signed in as ${session.name} (${ROLE_LABELS[session.role]})`,'success');
+  // Push local users to server if admin (ensures all devices get them)
+  if(session.role==='admin' && navigator.onLine && cfg.apiUrl){
+    syncUsersToServer();
+  }
   if(navigator.onLine && cfg.apiUrl) fullSync(true);
-  // Attendant always lands on Record; others on first allowed page
+  // Navigate to first allowed page
   const pages = ROLE_PAGES[session.role]||['record'];
   switchPage(pages[0]);
+}
+
+async function syncUsersToServer(){
+  if(!users.length || !cfg.apiUrl) return;
+  try{
+    await apiFetchWithData('syncUsers', users);
+    addLog(`Users pushed to server (${users.length} users)`,'info');
+  }catch(e){ addLog('User push failed: '+e.message,'warning'); }
 }
 
 function applyRolePermissions(){
