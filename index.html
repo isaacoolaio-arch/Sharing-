@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v5 — build 20260607c -->
+<!-- Petrol Tracker v6 — build 20260607-login -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -235,10 +235,130 @@ body{font-family:var(--font);color:var(--text);}
 
 /* ── PRICE CHIP ── */
 #price-chip{background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.06);}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;
+}
+.login-logo{font-size:56px;margin-bottom:8px;}
+.login-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:32px;}
+.login-box{width:100%;max-width:360px;}
+.user-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.user-btn{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:border-color 0.15s,box-shadow 0.15s;text-align:left;width:100%;
+}
+.user-btn:hover,.user-btn.selected{border-color:var(--neon);box-shadow:0 0 14px rgba(79,195,247,0.15);}
+.user-avatar{
+  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;flex-shrink:0;
+}
+.avatar-admin{background:rgba(59,130,246,0.2);color:#93C5FD;}
+.avatar-partner{background:rgba(34,211,238,0.15);color:#67E8F9;}
+.avatar-attendant{background:rgba(255,255,255,0.08);color:var(--text2);}
+.user-btn-name{font-size:15px;font-weight:600;color:var(--text);}
+.user-btn-role{font-size:12px;color:var(--text3);margin-top:2px;}
+.role-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:auto;flex-shrink:0;}
+.role-badge-admin{background:rgba(59,130,246,0.2);color:#93C5FD;}
+.role-badge-partner{background:rgba(34,211,238,0.12);color:#67E8F9;}
+.role-badge-attendant{background:rgba(255,255,255,0.07);color:var(--text3);}
+
+/* PIN pad */
+.pin-screen{display:none;}
+.pin-screen.active{display:block;}
+.user-select-screen{display:block;}
+.user-select-screen.hidden{display:none;}
+.pin-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.pin-back{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;padding:4px;}
+.pin-back:hover{color:var(--text);}
+.pin-who{font-size:16px;font-weight:600;color:var(--text);}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:28px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.15s;}
+.pin-dot.filled{background:var(--neon);border-color:var(--neon);box-shadow:0 0 8px rgba(79,195,247,0.5);}
+.pin-dot.error{background:var(--red);border-color:var(--red);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pin-key{
+  height:60px;border-radius:var(--radius);border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);font-family:var(--font);
+  font-size:20px;font-weight:600;cursor:pointer;transition:all 0.12s;
+}
+.pin-key:hover{background:var(--surface2);border-color:var(--neon);}
+.pin-key:active{transform:scale(0.94);background:rgba(79,195,247,0.1);}
+.pin-key.del{font-size:16px;color:var(--text3);}
+.pin-error{color:var(--red);font-size:13px;text-align:center;margin-top:12px;min-height:20px;}
+
+/* ── SESSION BAR (shows logged-in user) ── */
+.session-bar{
+  display:flex;align-items:center;gap:8px;padding:0 16px;
+  height:36px;background:rgba(0,0,0,0.25);flex-shrink:0;
+  border-bottom:1px solid rgba(79,195,247,0.08);
+}
+.session-user{font-size:12px;color:var(--text2);font-weight:500;}
+.session-role{font-size:11px;color:var(--text3);}
+.session-logout{margin-left:auto;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:4px 8px;border-radius:4px;}
+.session-logout:hover{color:var(--red);}
+
+/* ── USER MANAGEMENT PAGE ── */
+.user-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.user-card-info{flex:1;}
+.user-card-name{font-size:14px;font-weight:600;color:var(--text);}
+.user-card-meta{font-size:12px;color:var(--text3);margin-top:2px;}
+.user-card-actions{display:flex;gap:8px;}
+
 </style>
 </head>
 <body>
-<div class="app-shell">
+
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">⛽</div>
+  <div class="login-title">Petrol Tracker</div>
+  <div class="login-sub">Select your account to continue</div>
+  <div class="login-box">
+    <!-- User selection -->
+    <div class="user-select-screen" id="user-select">
+      <div class="user-list" id="user-list-ui"></div>
+    </div>
+    <!-- PIN entry -->
+    <div class="pin-screen" id="pin-screen">
+      <div class="pin-header">
+        <button class="pin-back" onclick="showUserSelect()">←</button>
+        <div>
+          <div class="pin-who" id="pin-who">Enter PIN</div>
+          <div style="font-size:12px;color:var(--text3);" id="pin-role-lbl"></div>
+        </div>
+      </div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <div></div>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key del" onclick="pinDel()">⌫</button>
+      </div>
+      <div class="pin-error" id="pin-error"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell" style="display:none;">
 
   <!-- SIDEBAR (desktop) -->
   <aside class="sidebar" id="sidebar" style="display:none;">
@@ -251,6 +371,7 @@ body{font-family:var(--font);color:var(--text);}
       <button class="side-btn" id="side-profit" onclick="switchPage('profit')"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Profit Share</button>
       <button class="side-btn" id="side-prices" onclick="switchPage('prices')"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Prices</button>
       <button class="side-btn" id="side-log" onclick="switchPage('log')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Activity Log</button>
+      <button class="side-btn" id="side-users" onclick="switchPage('users')" style="display:none;"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Users</button>
       <button class="side-btn" id="side-settings" onclick="switchPage('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</button>
     </nav>
     <div class="sidebar-footer">
@@ -271,6 +392,15 @@ body{font-family:var(--font);color:var(--text);}
         <span class="sync-dot" id="sync-dot"></span>
         <span class="offline-pill" id="offline-pill">Offline</span>
       </div>
+    </div>
+    <!-- Session bar -->
+    <div class="session-bar" id="session-bar">
+      <span style="font-size:16px;" id="session-avatar">👤</span>
+      <div>
+        <span class="session-user" id="session-user">—</span>
+        <span class="session-role" id="session-role"></span>
+      </div>
+      <button class="session-logout" onclick="logout()">↩ Log out</button>
     </div>
     <!-- Desktop header -->
     <div class="desktop-header" id="desktop-header" style="display:none;">
@@ -367,6 +497,35 @@ body{font-family:var(--font);color:var(--text);}
       <div id="log-list"><div class="empty"><div class="empty-icon">📋</div><h3>No activity yet</h3><p>Actions like saving sales, syncing, and errors will appear here.</p></div></div>
     </div>
 
+    <!-- PAGE: USERS (Admin only) -->
+    <div class="page" id="page-users">
+      <div class="card" id="add-user-form">
+        <div class="card-title">Add / Edit User</div>
+        <div class="grid-2">
+          <div class="field"><label>Full name</label><input type="text" id="u-name" placeholder="e.g. Ambrose Okello"></div>
+          <div class="field"><label>Role</label>
+            <select id="u-role">
+              <option value="admin">Admin</option>
+              <option value="partner">Partner</option>
+              <option value="attendant" selected>Attendant</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>PIN (4 digits)</label><input type="password" id="u-pin" placeholder="••••" maxlength="4" inputmode="numeric"></div>
+          <div class="field"><label>Confirm PIN</label><input type="password" id="u-pin2" placeholder="••••" maxlength="4" inputmode="numeric"></div>
+        </div>
+        <input type="hidden" id="u-edit-id">
+        <button class="btn-primary" onclick="saveUser()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save User
+        </button>
+        <div id="u-error" style="color:var(--red);font-size:13px;margin-top:10px;display:none;"></div>
+      </div>
+      <div class="section-label">Users <span class="count-badge" id="user-count">0</span></div>
+      <div id="user-list-mgmt"></div>
+    </div>
+
     <!-- PAGE: SETTINGS -->
     <div class="page" id="page-settings">
       <div class="settings-section">
@@ -453,12 +612,48 @@ body{font-family:var(--font);color:var(--text);}
 // IMPORTANT: Update this URL whenever you redeploy the Apps Script
 const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
 // Stored URL (from Settings) always overrides DEFAULT_API
-const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2', LOG:'pt_log_v1' };
-const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', log:'Activity Log', settings:'Settings' };
+const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2', LOG:'pt_log_v1', USERS:'pt_users_v1', SESSION:'pt_session_v1' };
+const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', log:'Activity Log', users:'User Management', settings:'Settings' };
+
+// ── Role permissions ──────────────────────────────────────────────────────────
+const ROLE_PAGES = {
+  admin:     ['record','sales','profit','prices','log','users','settings'],
+  partner:   ['sales','profit'],
+  attendant: ['record']
+};
+const ROLE_LABELS = { admin:'Admin', partner:'Partner', attendant:'Attendant' };
+const ROLE_AVATARS = { admin:'👤', partner:'🤝', attendant:'⛽' };
+const ROLE_COLORS  = { admin:'avatar-admin', partner:'avatar-partner', attendant:'avatar-attendant' };
+const ROLE_BADGE   = { admin:'role-badge-admin', partner:'role-badge-partner', attendant:'role-badge-attendant' };
 
 // ══ STATE ═════════════════════════════════════════════════════════════════════
 let sales=[], prices=[], queue=[], actLog=[];
 let cfg = { apiUrl:DEFAULT_API, nameA:'Partner A', nameB:'Partner B', attendants:[] };
+
+// ── Users & session ───────────────────────────────────────────────────────────
+let users   = []; // [{id, name, role, pin}]
+let session = null; // {userId, name, role, loginTime}
+
+function loadUsers(){
+  try{ users=JSON.parse(localStorage.getItem(K.USERS)||'[]'); }catch(e){ users=[]; }
+  // Seed default admin if no users at all
+  if(!users.length){
+    users=[{id:'admin_default',name:'Admin',role:'admin',pin:'1234'}];
+    saveUsers();
+  }
+}
+function saveUsers(){ localStorage.setItem(K.USERS, JSON.stringify(users)); }
+function loadSession(){
+  try{
+    const s=JSON.parse(localStorage.getItem(K.SESSION));
+    if(s && s.loginTime){
+      // Session expires after 12 hours
+      if(Date.now()-s.loginTime < 12*60*60*1000) session=s;
+      else localStorage.removeItem(K.SESSION);
+    }
+  }catch(e){}
+}
+function saveSession(){ localStorage.setItem(K.SESSION, JSON.stringify(session)); }
 let editingType=null, editingId=null;
 
 function loadAll(){
@@ -477,6 +672,224 @@ const saveP  =()=>localStorage.setItem(K.PRICES,  JSON.stringify(prices));
 const saveQ  =()=>localStorage.setItem(K.QUEUE,   JSON.stringify(queue));
 const saveCfg=()=>localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
 const saveLog=()=>localStorage.setItem(K.LOG,     JSON.stringify(actLog.slice(0,500)));
+
+// ══ LOGIN SYSTEM ══════════════════════════════════════════════════════════════
+let pinBuffer = '';
+let loginTarget = null; // user being logged in
+
+function initLogin(){
+  loadUsers(); loadSession();
+  if(session){
+    // Valid session — go straight to app
+    enterApp();
+  } else {
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-shell').style.display='none';
+  showUserSelect();
+}
+
+function showUserSelect(){
+  document.getElementById('user-select').className='user-select-screen';
+  document.getElementById('pin-screen').className='pin-screen';
+  loginTarget=null; pinBuffer='';
+  renderLoginUserList();
+}
+
+function renderLoginUserList(){
+  const ul=document.getElementById('user-list-ui');
+  ul.innerHTML=users.map(u=>`
+    <button class="user-btn" onclick="selectUser('${u.id}')">
+      <div class="user-avatar ${ROLE_COLORS[u.role]||'avatar-attendant'}">${u.name.charAt(0).toUpperCase()}</div>
+      <div>
+        <div class="user-btn-name">${u.name}</div>
+        <div class="user-btn-role">${ROLE_LABELS[u.role]||u.role}</div>
+      </div>
+      <span class="role-badge ${ROLE_BADGE[u.role]||''}">${ROLE_LABELS[u.role]||u.role}</span>
+    </button>`).join('');
+}
+
+function selectUser(id){
+  const u=users.find(x=>x.id===id);
+  if(!u) return;
+  loginTarget=u;
+  pinBuffer='';
+  document.getElementById('pin-who').textContent=u.name;
+  document.getElementById('pin-role-lbl').textContent=ROLE_LABELS[u.role]||u.role;
+  document.getElementById('pin-error').textContent='';
+  updatePinDots();
+  document.getElementById('user-select').className='user-select-screen hidden';
+  document.getElementById('pin-screen').className='pin-screen active';
+}
+
+function pinKey(k){
+  if(pinBuffer.length>=4) return;
+  pinBuffer+=k;
+  updatePinDots();
+  if(pinBuffer.length===4) setTimeout(checkPin,120);
+}
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent='';
+  document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('error'));
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.toggle('filled', i<pinBuffer.length);
+    d.classList.remove('error');
+  }
+}
+function checkPin(){
+  if(!loginTarget) return;
+  if(pinBuffer===loginTarget.pin){
+    // Success
+    session={userId:loginTarget.id, name:loginTarget.name, role:loginTarget.role, loginTime:Date.now()};
+    saveSession();
+    addLog(`Login: ${loginTarget.name} (${ROLE_LABELS[loginTarget.role]}) signed in`,'success');
+    enterApp();
+  } else {
+    // Wrong PIN
+    document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));
+    document.getElementById('pin-error').textContent='Wrong PIN — try again';
+    setTimeout(()=>{
+      pinBuffer='';
+      updatePinDots();
+      document.getElementById('pin-error').textContent='';
+    },900);
+  }
+}
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  applyRolePermissions();
+  updateSessionBar();
+  // Load data and sync
+  loadAll();
+  applyLayout();
+  populateAttDropdown();
+  renderTodaySummary();
+  updatePriceChip();
+  updateQueueBanner();
+  if(navigator.onLine && cfg.apiUrl) fullSync(true);
+  // Attendant always lands on Record; others on first allowed page
+  const pages = ROLE_PAGES[session.role]||['record'];
+  switchPage(pages[0]);
+}
+
+function applyRolePermissions(){
+  const role=session?session.role:'attendant';
+  const allowed=ROLE_PAGES[role]||['record'];
+  // Show/hide nav buttons
+  ['record','sales','profit','prices','log','users','settings'].forEach(p=>{
+    const nb=document.getElementById('nav-'+p);
+    const sb=document.getElementById('side-'+p);
+    const show=allowed.includes(p);
+    if(nb) nb.style.display=show?'flex':'none';
+    if(sb) sb.style.display=show?'flex':'none';
+  });
+}
+
+function updateSessionBar(){
+  if(!session) return;
+  document.getElementById('session-user').textContent=session.name;
+  document.getElementById('session-role').textContent=' · '+ROLE_LABELS[session.role];
+  document.getElementById('session-avatar').textContent=ROLE_AVATARS[session.role]||'👤';
+}
+
+function logout(){
+  if(!confirm('Log out of Petrol Tracker?')) return;
+  addLog(`Logout: ${session?session.name:'?'} signed out`,'info');
+  session=null;
+  localStorage.removeItem(K.SESSION);
+  showLoginScreen();
+}
+
+// ══ USER MANAGEMENT ═══════════════════════════════════════════════════════════
+function renderUsersPage(){
+  const list=document.getElementById('user-list-mgmt');
+  document.getElementById('user-count').textContent=users.length;
+  list.innerHTML=users.map(u=>`
+    <div class="user-card">
+      <div class="user-avatar ${ROLE_COLORS[u.role]||'avatar-attendant'}" style="width:40px;height:40px;font-size:16px;">${u.name.charAt(0).toUpperCase()}</div>
+      <div class="user-card-info">
+        <div class="user-card-name">${u.name}</div>
+        <div class="user-card-meta">${ROLE_LABELS[u.role]||u.role} &nbsp;·&nbsp; PIN: ${'•'.repeat(u.pin.length)}</div>
+      </div>
+      <div class="user-card-actions">
+        <button class="btn-icon" style="background:rgba(59,130,246,0.15);color:#93C5FD;" onclick="editUser('${u.id}')">✏️</button>
+        ${u.id!=='admin_default'?`<button class="btn-icon btn-del" onclick="deleteUser('${u.id}')">🗑</button>`:''}
+      </div>
+    </div>`).join('');
+  // Reset form
+  document.getElementById('u-name').value='';
+  document.getElementById('u-pin').value='';
+  document.getElementById('u-pin2').value='';
+  document.getElementById('u-edit-id').value='';
+  document.getElementById('u-role').value='attendant';
+  document.getElementById('u-error').style.display='none';
+}
+
+function saveUser(){
+  const name=document.getElementById('u-name').value.trim();
+  const role=document.getElementById('u-role').value;
+  const pin=document.getElementById('u-pin').value.trim();
+  const pin2=document.getElementById('u-pin2').value.trim();
+  const editId=document.getElementById('u-edit-id').value;
+  const errEl=document.getElementById('u-error');
+  errEl.style.display='none';
+  if(!name){ errEl.textContent='Enter a name'; errEl.style.display='block'; return; }
+  if(pin && !/^\d{4}$/.test(pin)){ errEl.textContent='PIN must be exactly 4 digits'; errEl.style.display='block'; return; }
+  if(pin && pin!==pin2){ errEl.textContent='PINs do not match'; errEl.style.display='block'; return; }
+  if(editId){
+    // Editing existing
+    const u=users.find(x=>x.id===editId);
+    if(u){
+      u.name=name; u.role=role;
+      if(pin) u.pin=pin;
+      saveUsers(); renderUsersPage();
+      addLog(`User updated: ${name} (${ROLE_LABELS[role]})`,'info');
+      showToast('User updated ✓');
+    }
+  } else {
+    // New user — PIN required
+    if(!pin){ errEl.textContent='PIN is required for new users'; errEl.style.display='block'; return; }
+    if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){ errEl.textContent='A user with that name already exists'; errEl.style.display='block'; return; }
+    const newUser={id:'u_'+Date.now(),name,role,pin};
+    users.push(newUser);
+    saveUsers(); renderUsersPage();
+    addLog(`User created: ${name} (${ROLE_LABELS[role]})`,'success');
+    showToast('User added ✓');
+  }
+}
+
+function editUser(id){
+  const u=users.find(x=>x.id===id); if(!u) return;
+  document.getElementById('u-name').value=u.name;
+  document.getElementById('u-role').value=u.role;
+  document.getElementById('u-pin').value='';
+  document.getElementById('u-pin2').value='';
+  document.getElementById('u-edit-id').value=u.id;
+  document.getElementById('u-error').style.display='none';
+  // Scroll to form
+  document.getElementById('add-user-form').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteUser(id){
+  const u=users.find(x=>x.id===id); if(!u) return;
+  if(!confirm(`Delete user "${u.name}"? They will no longer be able to log in.`)) return;
+  users=users.filter(x=>x.id!==id);
+  saveUsers(); renderUsersPage();
+  addLog(`User deleted: ${u.name}`,'warning');
+  showToast('User deleted');
+}
+
 
 // ══ ACTIVITY LOG ══════════════════════════════════════════════════════════════
 function addLog(msg, type='info'){
@@ -561,6 +974,7 @@ function switchPage(p){
   if(p==='profit')  { buildFilterOpts('profit-filter'); renderProfit(); }
   if(p==='prices')  { renderPriceHistory(); }
   if(p==='log')     { renderLog(); }
+  if(p==='users')   { renderUsersPage(); }
   if(p==='settings'){ renderSettings(); }
 }
 
@@ -1105,14 +1519,8 @@ if('serviceWorker' in navigator){
 }
 
 // ══ INIT ══════════════════════════════════════════════════════════════════════
-loadAll();
 applyLayout();
-populateAttDropdown();
-renderTodaySummary();
-updatePriceChip();
-updateQueueBanner();
-addLog('App started','info');
-if(navigator.onLine&&cfg.apiUrl) fullSync(true);
+initLogin(); // handles login check → enterApp() → loadAll, sync, etc.
 </script>
 </body>
 </html>
