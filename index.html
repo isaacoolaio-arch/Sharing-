@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-tx-sheets -->
+<!-- Petrol Tracker v6 — build 20260607-shiftexp -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -248,6 +248,21 @@ body{font-family:var(--font);color:var(--text);}
 
 /* ── PRICE CHIP ── */
 #price-chip{background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.06);}
+
+/* ── SHIFT EXPENSES ── */
+.shift-exp-header{display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);border-top:1px solid var(--border2);margin-top:4px;user-select:none;}
+.shift-exp-header:hover{color:var(--text);}
+.shift-exp-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;font-size:13px;}
+.shift-exp-item-body{flex:1;}
+.shift-exp-item-desc{font-weight:500;color:var(--text);}
+.shift-exp-item-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.shift-exp-item-amt{font-family:var(--mono);font-weight:600;color:var(--red);white-space:nowrap;}
+.shift-exp-item-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;}
+.shift-exp-item-del:hover{color:var(--red);}
+.shift-exp-add{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.shift-exp-add input,.shift-exp-add select{height:38px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface2);padding:0 8px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;width:100%;}
+.shift-exp-add input:focus,.shift-exp-add select:focus{border-color:var(--neon);}
+.shift-exp-add .btn-add{grid-column:1/-1;height:36px;}
 
 /* ── PARTNER FULL CARDS ── */
 .partner-full-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;margin-bottom:4px;}
@@ -530,6 +545,27 @@ body.edit-unlocked .locked-hint{display:none!important;}
         <div class="field"><label>Attendant</label><select id="inp-attendant"><option value="">— select attendant —</option></select></div>
         <div class="field"><label>Litres sold</label><input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal"></div>
         <div class="field"><label>Gross profit preview</label><input type="text" id="preview-profit" readonly placeholder="Fill in litres above"></div>
+
+        <!-- Shift Expenses -->
+        <div class="shift-exp-header" onclick="toggleShiftExp()">
+          <span>➕ Shift expenses</span>
+          <span id="shift-exp-badge" style="display:none;" class="badge badge-day">0</span>
+          <span id="shift-exp-chevron" style="margin-left:auto;color:var(--text3);font-size:12px;">▼</span>
+        </div>
+        <div id="shift-exp-panel" style="display:none;">
+          <div id="shift-exp-list"></div>
+          <div class="shift-exp-add">
+            <input type="text" id="exp-desc" placeholder="Description (e.g. Generator fuel)" autocomplete="off">
+            <input type="number" id="exp-amount" placeholder="Amount (UGX)" inputmode="numeric" min="0">
+            <select id="exp-partner">
+              <option value="a" id="exp-opt-a">Partner A</option>
+              <option value="b" id="exp-opt-b">Partner B</option>
+            </select>
+            <button class="btn-add" onclick="addShiftExpense()" type="button">Add</button>
+          </div>
+          <div id="shift-exp-total" style="font-size:12px;color:var(--text3);margin-top:6px;text-align:right;"></div>
+        </div>
+
         <button class="btn-primary edit-only" onclick="saveSale()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Sale</button>
         <div class="locked-hint" style="text-align:center;padding:10px;font-size:13px;color:var(--text3);">🔒 Enable editing to save sales</div>
       </div>
@@ -1114,7 +1150,7 @@ function enterApp(){
   // Load data and sync
   loadAll();
   applyLayout();
-  populateAttDropdown();
+  populateAttDropdown(); populateExpPartnerOpts();
   renderTodaySummary();
   updatePriceChip();
   updateQueueBanner();
@@ -1393,7 +1429,7 @@ function switchPage(p){
   const nb=document.getElementById('nav-'+p); if(nb) nb.classList.add('active');
   const sb=document.getElementById('side-'+p); if(sb) sb.classList.add('active');
   const th=document.getElementById('desk-title'); if(th) th.textContent=PAGE_TITLES[p]||'';
-  if(p==='record')  { populateAttDropdown(); renderTodaySummary(); updatePriceChip(); }
+  if(p==='record')  { populateAttDropdown(); populateExpPartnerOpts(); renderTodaySummary(); updatePriceChip(); }
   if(p==='sales')   { buildFilterOpts('log-filter'); populateSalesAttFilter(); renderSalesLog(); }
   if(p==='profit')  { buildFilterOpts('profit-filter'); renderProfit(); }
   if(p==='prices')  { renderPriceHistory(); }
@@ -1467,6 +1503,65 @@ function renderPriceHistory(){
   }).join('');
 }
 
+// ══ SHIFT EXPENSES ════════════════════════════════════════════════════════════
+let shiftExpenses = [];
+
+function toggleShiftExp(){
+  const panel=document.getElementById('shift-exp-panel');
+  const chev =document.getElementById('shift-exp-chevron');
+  const open =panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  chev.textContent=open?'▼':'▲';
+}
+function populateExpPartnerOpts(){
+  const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
+  const oa=document.getElementById('exp-opt-a'); if(oa) oa.textContent=nA;
+  const ob=document.getElementById('exp-opt-b'); if(ob) ob.textContent=nB;
+}
+function addShiftExpense(){
+  const desc  =document.getElementById('exp-desc').value.trim();
+  const amount=parseFloat(document.getElementById('exp-amount').value);
+  const partner=document.getElementById('exp-partner').value;
+  if(!desc)             { showToast('Enter description'); return; }
+  if(!amount||amount<=0){ showToast('Enter valid amount'); return; }
+  shiftExpenses.push({id:uid(),desc,amount,partner});
+  document.getElementById('exp-desc').value='';
+  document.getElementById('exp-amount').value='';
+  renderShiftExpenses();
+}
+function removeShiftExpense(id){
+  shiftExpenses=shiftExpenses.filter(e=>e.id!==id);
+  renderShiftExpenses();
+}
+function renderShiftExpenses(){
+  const list =document.getElementById('shift-exp-list');
+  const badge=document.getElementById('shift-exp-badge');
+  const tot  =document.getElementById('shift-exp-total');
+  if(!list) return;
+  badge.style.display=shiftExpenses.length?'inline-block':'none';
+  badge.textContent=shiftExpenses.length;
+  if(!shiftExpenses.length){ list.innerHTML=''; tot.textContent=''; return; }
+  const sum=shiftExpenses.reduce((a,e)=>a+e.amount,0);
+  list.innerHTML=shiftExpenses.map(e=>{
+    const pName=e.partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+    return `<div class="shift-exp-item">
+      <div class="shift-exp-item-body">
+        <div class="shift-exp-item-desc">${e.desc}</div>
+        <div class="shift-exp-item-meta">Deduct from: ${pName}</div>
+      </div>
+      <div class="shift-exp-item-amt">- UGX ${fmt(e.amount)}</div>
+      <button class="shift-exp-item-del" onclick="removeShiftExpense('${e.id}')">×</button>
+    </div>`;
+  }).join('');
+  tot.textContent=`Total expenses: UGX ${fmt(sum)}`;
+}
+function clearShiftExpenses(){
+  shiftExpenses=[];
+  renderShiftExpenses();
+  const p=document.getElementById('shift-exp-panel'); if(p) p.style.display='none';
+  const c=document.getElementById('shift-exp-chevron'); if(c) c.textContent='▼';
+}
+
 // ══ RECORD ════════════════════════════════════════════════════════════════════
 document.getElementById('inp-date').value=todayStr();
 document.getElementById('inp-litres').addEventListener('input',updatePreview);
@@ -1484,22 +1579,44 @@ function updatePreview(){
 }
 async function saveSale(){
   if(!requireEditing()) return;
-  const date=document.getElementById('inp-date').value;
-  const att=document.getElementById('inp-attendant').value;
-  const litres=parseFloat(document.getElementById('inp-litres').value);
-  const shift=document.getElementById('inp-shift').value;
-  const cp=priceAtDate(date);
-  if(!date){ showToast('Select a date'); return; }
-  if(!att){ showToast('Select an attendant'); return; }
+  const date   = document.getElementById('inp-date').value;
+  const att    = document.getElementById('inp-attendant').value;
+  const litres = parseFloat(document.getElementById('inp-litres').value);
+  const shift  = document.getElementById('inp-shift').value;
+  const cp     = priceAtDate(date);
+  if(!date)            { showToast('Select a date'); return; }
+  if(!att)             { showToast('Select an attendant'); return; }
   if(!litres||litres<=0){ showToast('Enter litres sold'); return; }
-  if(!cp){ showToast('No price set for this date — go to Prices tab'); return; }
-  const rec={id:uid(),date,attendant:att,shift,litres,cost:cp.cost,sell:cp.sell,_pending:true};
+  if(!cp)              { showToast('No price set for this date — go to Prices tab'); return; }
+
+  const rec = {id:uid(),date,attendant:att,shift,litres,cost:cp.cost,sell:cp.sell,_pending:true};
   sales.push(rec); saveS(); renderTodaySummary();
+
+  // Process shift expenses — each becomes a deduction transaction for that month
+  const month = monthKey(date);
+  if(shiftExpenses.length > 0){
+    const expCopy = [...shiftExpenses];
+    for(const exp of expCopy){
+      const pName = exp.partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+      const tx = {
+        id: uid(), type:'deduction', partner:exp.partner, partnerName:pName,
+        month, amount:exp.amount,
+        note:`[Shift expense] ${exp.desc} — ${att} · ${shift} · ${date}`,
+        date, createdAt:new Date().toISOString()
+      };
+      transactions.push(tx); 
+      if(cfg.apiUrl){ apiFetchWithData('saveTransaction', tx).catch(()=>{}); }
+    }
+    saveTx();
+    addLog(`${expCopy.length} shift expense${expCopy.length>1?'s':''} saved as deductions for ${month}`,'warning');
+  }
+
   document.getElementById('inp-litres').value='';
   document.getElementById('preview-profit').value='';
   document.getElementById('preview-profit').className='';
   document.getElementById('inp-date').value=todayStr();
-  showToast('Sale saved ✓');
+  clearShiftExpenses();
+  showToast(shiftExpenses.length>0 ? `Sale + ${shiftExpenses.length} expense(s) saved ✓` : 'Sale saved ✓');
   addLog(`<strong>Sale recorded</strong>: ${att} · ${litres.toFixed(2)}L · ${shift} · ${date}`,'success');
   await pushSale(rec);
 }
