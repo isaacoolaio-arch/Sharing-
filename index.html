@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-usersync2 -->
+<!-- Petrol Tracker v6 — build 20260607-dedup -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -650,11 +650,16 @@ let session = null; // {userId, name, role, loginTime}
 
 function loadUsers(){
   try{ users=JSON.parse(localStorage.getItem(K.USERS)||'[]'); }catch(e){ users=[]; }
-  // Only seed default admin if localStorage has never been set at all
-  // (K.USERS key doesn't exist) — don't overwrite if empty after a failed sync
+  // Deduplicate by ID (keep last occurrence)
+  const seen=new Map();
+  users.forEach(u=>seen.set(u.id,u));
+  users=[...seen.values()];
+  // Only seed default admin if key has never been written
   if(localStorage.getItem(K.USERS)===null){
     users=[{id:'admin_default',name:'Admin',role:'admin',pin:'1234'}];
     saveUsers();
+  } else if(users.length !== seen.size || seen.size !== JSON.parse(localStorage.getItem(K.USERS)||'[]').length){
+    saveUsers(); // save deduplicated version
   }
 }
 function saveUsers(){ localStorage.setItem(K.USERS, JSON.stringify(users)); }
@@ -853,11 +858,17 @@ function enterApp(){
 }
 
 async function syncUsersToServer(){
-  if(!users.length || !cfg.apiUrl) return;
+  if(!cfg.apiUrl) return;
+  // Deduplicate by ID before pushing
+  const seen=new Map();
+  users.forEach(u=>seen.set(u.id,u));
+  users=[...seen.values()];
+  saveUsers();
+  if(!users.length) return;
   try{
     await apiFetchWithData('syncUsers', users);
-    addLog(`Users pushed to server (${users.length} users)`,'info');
-  }catch(e){ addLog('User push failed: '+e.message,'warning'); }
+    addLog(`Users synced to server (${users.length} users)`,'info');
+  }catch(e){ addLog('User sync failed: '+e.message,'warning'); }
 }
 
 function applyRolePermissions(){
@@ -890,6 +901,8 @@ function logout(){
 
 // ══ USER MANAGEMENT ═══════════════════════════════════════════════════════════
 function renderUsersPage(){
+  // Deduplicate before rendering
+  const seen=new Map(); users.forEach(u=>seen.set(u.id,u)); users=[...seen.values()]; saveUsers();
   const list=document.getElementById('user-list-mgmt');
   document.getElementById('user-count').textContent=users.length;
   list.innerHTML=users.map(u=>`
