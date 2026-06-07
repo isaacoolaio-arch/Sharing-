@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-users-sync -->
+<!-- Petrol Tracker v6 — build 20260607-url-setup -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -316,6 +316,19 @@ body{font-family:var(--font);color:var(--text);}
 
 <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
 <div id="login-screen">
+  <!-- URL setup overlay (shown on first launch if no URL saved) -->
+  <div id="url-setup-overlay" style="display:none;position:absolute;inset:0;background:var(--bg);z-index:10;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+    <div style="font-size:40px;margin-bottom:12px;">🔗</div>
+    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;">Connect to server</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:24px;text-align:center;">Paste your Google Apps Script URL once to connect this device.</div>
+    <div style="width:100%;max-width:360px;">
+      <input type="url" id="url-setup-inp" placeholder="https://script.google.com/macros/s/..." 
+        style="width:100%;height:48px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;">
+      <button onclick="saveUrlSetup()" style="width:100%;height:50px;background:linear-gradient(135deg,#1E40AF,#2563EB);color:white;border:1px solid rgba(79,195,247,0.3);border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(59,130,246,0.3);">
+        Connect & Continue
+      </button>
+    </div>
+  </div>
   <div class="login-logo">⛽</div>
   <div class="login-title">Petrol Tracker</div>
   <div class="login-sub">Select your account to continue</div>
@@ -610,9 +623,9 @@ body{font-family:var(--font);color:var(--text);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ══ CONFIG ════════════════════════════════════════════════════════════════════
-// IMPORTANT: Update this URL whenever you redeploy the Apps Script
-const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbyLJS1_54BavxcfC_gQP_qCAYfTecmoIpl9jph2aZWWDEdhVvFXS_StDSgjTvLBgrU1/exec';
-// Stored URL (from Settings) always overrides DEFAULT_API
+// IMPORTANT: Leave empty — each device enters the URL once via the setup screen
+// OR paste your current working Apps Script URL here to skip that step
+const DEFAULT_API = '';
 const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2', LOG:'pt_log_v1', USERS:'pt_users_v1', SESSION:'pt_session_v1' };
 const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', log:'Activity Log', users:'User Management', settings:'Settings' };
 
@@ -681,29 +694,52 @@ let loginTarget = null; // user being logged in
 
 async function initLogin(){
   loadUsers(); loadSession();
-  // Pull latest users from server before showing login screen
-  // (so new users added on another device appear immediately)
-  if(navigator.onLine && DEFAULT_API){
+  // Get best available API URL
+  const savedSettings = (() => { try{ return JSON.parse(localStorage.getItem(K.SETTINGS)||'{}'); }catch(e){ return {}; } })();
+  const apiUrl = savedSettings.apiUrl || DEFAULT_API;
+  // If no real URL saved yet (new device), show URL setup first
+  if(!savedSettings.apiUrl && !DEFAULT_API){
+    showUrlSetup();
+    return;
+  }
+  // Try to pull latest users from server
+  if(navigator.onLine && apiUrl){
     try{
-      const stored = JSON.parse(localStorage.getItem(K.SETTINGS)||'{}');
-      const url = stored.apiUrl || DEFAULT_API;
-      if(url){
-        const res = await fetch(url+'?action=getUsers');
+      const res = await fetch(apiUrl + '?action=getUsers');
+      if(res.ok){
         const data = await res.json();
-        if(data.users && data.users.length>0){
-          users = data.users.filter(u=>u.id&&u.name&&u.role&&u.pin);
+        if(data.users && data.users.length > 0){
+          users = data.users.filter(u => u.id && u.name && u.role && u.pin);
           saveUsers();
+          // Also save the working URL so future loads use it
+          const s = savedSettings;
+          s.apiUrl = apiUrl;
+          localStorage.setItem(K.SETTINGS, JSON.stringify(s));
         }
       }
-    }catch(e){ /* offline or error — use cached users */ }
+    }catch(e){ /* offline — use cached users */ }
   }
-  if(session && users.find(u=>u.id===session.userId)){
+  if(session && users.find(u => u.id === session.userId)){
     enterApp();
   } else {
-    session=null;
+    session = null;
     localStorage.removeItem(K.SESSION);
     showLoginScreen();
   }
+}
+
+function showUrlSetup(){
+  // Show a minimal URL input overlay on the login screen
+  document.getElementById('url-setup-overlay').style.display='flex';
+}
+function saveUrlSetup(){
+  const url = document.getElementById('url-setup-inp').value.trim();
+  if(!url || !url.startsWith('https://')){ alert('Please paste a valid Apps Script URL'); return; }
+  const s = (() => { try{ return JSON.parse(localStorage.getItem(K.SETTINGS)||'{}'); }catch(e){ return {}; } })();
+  s.apiUrl = url;
+  localStorage.setItem(K.SETTINGS, JSON.stringify(s));
+  document.getElementById('url-setup-overlay').style.display='none';
+  initLogin(); // retry now with URL
 }
 
 function showLoginScreen(){
