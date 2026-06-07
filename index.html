@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-login2 -->
+<!-- Petrol Tracker v6 — build 20260607-users-sync -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -679,12 +679,29 @@ const saveLog=()=>localStorage.setItem(K.LOG,     JSON.stringify(actLog.slice(0,
 let pinBuffer = '';
 let loginTarget = null; // user being logged in
 
-function initLogin(){
+async function initLogin(){
   loadUsers(); loadSession();
-  if(session){
-    // Valid session — go straight to app
+  // Pull latest users from server before showing login screen
+  // (so new users added on another device appear immediately)
+  if(navigator.onLine && DEFAULT_API){
+    try{
+      const stored = JSON.parse(localStorage.getItem(K.SETTINGS)||'{}');
+      const url = stored.apiUrl || DEFAULT_API;
+      if(url){
+        const res = await fetch(url+'?action=getUsers');
+        const data = await res.json();
+        if(data.users && data.users.length>0){
+          users = data.users.filter(u=>u.id&&u.name&&u.role&&u.pin);
+          saveUsers();
+        }
+      }
+    }catch(e){ /* offline or error — use cached users */ }
+  }
+  if(session && users.find(u=>u.id===session.userId)){
     enterApp();
   } else {
+    session=null;
+    localStorage.removeItem(K.SESSION);
     showLoginScreen();
   }
 }
@@ -838,7 +855,7 @@ function renderUsersPage(){
   document.getElementById('u-error').style.display='none';
 }
 
-function saveUser(){
+async function saveUser(){
   const name=document.getElementById('u-name').value.trim();
   const role=document.getElementById('u-role').value;
   const pin=document.getElementById('u-pin').value.trim();
@@ -850,7 +867,6 @@ function saveUser(){
   if(pin && !/^\d{4}$/.test(pin)){ errEl.textContent='PIN must be exactly 4 digits'; errEl.style.display='block'; return; }
   if(pin && pin!==pin2){ errEl.textContent='PINs do not match'; errEl.style.display='block'; return; }
   if(editId){
-    // Editing existing
     const u=users.find(x=>x.id===editId);
     if(u){
       u.name=name; u.role=role;
@@ -858,9 +874,9 @@ function saveUser(){
       saveUsers(); renderUsersPage();
       addLog(`User updated: ${name} (${ROLE_LABELS[role]})`,'info');
       showToast('User updated ✓');
+      if(cfg.apiUrl){ try{ await apiFetchWithData('editUser',u); }catch(e){ addLog('User sync failed: '+e.message,'error'); } }
     }
   } else {
-    // New user — PIN required
     if(!pin){ errEl.textContent='PIN is required for new users'; errEl.style.display='block'; return; }
     if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){ errEl.textContent='A user with that name already exists'; errEl.style.display='block'; return; }
     const newUser={id:'u_'+Date.now(),name,role,pin};
@@ -868,6 +884,7 @@ function saveUser(){
     saveUsers(); renderUsersPage();
     addLog(`User created: ${name} (${ROLE_LABELS[role]})`,'success');
     showToast('User added ✓');
+    if(cfg.apiUrl){ try{ await apiFetchWithData('saveUser',newUser); }catch(e){ addLog('User sync failed: '+e.message,'error'); } }
   }
 }
 
@@ -883,13 +900,14 @@ function editUser(id){
   document.getElementById('add-user-form').scrollIntoView({behavior:'smooth'});
 }
 
-function deleteUser(id){
+async function deleteUser(id){
   const u=users.find(x=>x.id===id); if(!u) return;
   if(!confirm(`Delete user "${u.name}"? They will no longer be able to log in.`)) return;
   users=users.filter(x=>x.id!==id);
   saveUsers(); renderUsersPage();
   addLog(`User deleted: ${u.name}`,'warning');
   showToast('User deleted');
+  if(cfg.apiUrl){ try{ await apiFetch('deleteUser',{id}); }catch(e){ addLog('User delete sync failed: '+e.message,'error'); } }
 }
 
 
@@ -1426,6 +1444,25 @@ async function fullSync(silent=false){
       if(s.attendants) cfg.attendants=s.attendants.split(',').filter(Boolean);
       saveCfg();
     }
+    // ── Pull users — server is source of truth ──
+    try{
+      const ur=await apiFetch('getUsers');
+      if(ur.users && ur.users.length>0){
+        // Server users completely replace local (server is master)
+        users=ur.users.filter(u=>u.id&&u.name&&u.role&&u.pin);
+        saveUsers();
+        addLog(`Users synced: ${users.length} users loaded`,'success');
+        // If currently logged-in user was deleted on server, log out
+        if(session && !users.find(u=>u.id===session.userId)){
+          addLog('Logged-out: user removed from server','warning');
+          logout(); return;
+        }
+      } else if(ur.users && ur.users.length===0){
+        // Server has no users yet — push our local users up
+        await apiFetchWithData('syncUsers', users);
+        addLog('Users pushed to server (first sync)','info');
+      }
+    }catch(e){ addLog('Users sync skipped: '+e.message,'warning'); }
     await flushQueue();
     setSyncDot('ok');
     if(!silent) showToast('Sync complete ✓');
