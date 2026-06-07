@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-shifts-icon -->
+<!-- Petrol Tracker v6 — build 20260607-pageedit -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -249,6 +249,34 @@ body{font-family:var(--font);color:var(--text);}
 /* ── PRICE CHIP ── */
 #price-chip{background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.06);}
 
+/* ── PAGE HEADER ROW (Oola Spares style) ── */
+.page-header-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.page-header-title{
+  font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.02em;
+}
+.page-edit-btn{
+  height:32px;padding:0 16px;border-radius:20px;border:1px solid;
+  font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:6px;transition:all 0.15s;
+}
+.page-edit-btn.locked{
+  background:rgba(255,255,255,0.05);
+  border-color:rgba(255,255,255,0.15);
+  color:var(--text3);
+}
+.page-edit-btn.locked:hover{
+  border-color:rgba(79,195,247,0.4);color:var(--neon);
+}
+.page-edit-btn.unlocked{
+  background:rgba(34,211,238,0.12);
+  border-color:rgba(34,211,238,0.35);
+  color:var(--teal);
+  box-shadow:0 0 10px rgba(34,211,238,0.2);
+}
+
 /* ── EDITING LOCK ── */
 .edit-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;flex-shrink:0;font-size:12px;transition:background 0.2s;}
 .edit-bar.locked{background:rgba(248,113,113,0.07);border-bottom:1px solid rgba(248,113,113,0.12);color:var(--text3);}
@@ -441,8 +469,8 @@ body.edit-unlocked .locked-hint{display:none!important;}
       </div>
       <button class="session-logout" onclick="logout()">↩ Log out</button>
     </div>
-    <!-- Edit toggle bar -->
-    <div class="edit-bar locked" id="edit-bar">
+    <!-- Edit toggle bar (hidden - using per-page edit buttons now) -->
+    <div class="edit-bar locked" id="edit-bar" style="display:none;">
       <span class="edit-bar-label" id="edit-bar-label">🔒 View only</span>
       <button class="edit-btn locked" id="edit-btn" onclick="toggleEditing()">Enable Editing</button>
     </div>
@@ -483,6 +511,11 @@ body.edit-unlocked .locked-hint{display:none!important;}
 
     <!-- PAGE: SALES LOG -->
     <div class="page" id="page-sales">
+      <!-- Page header with Edit toggle -->
+      <div class="page-header-row">
+        <span class="page-header-title">Sales Log</span>
+        <button class="page-edit-btn locked" id="sales-edit-btn" onclick="togglePageEdit('sales')">🔒 Edit</button>
+      </div>
       <!-- Filter bar -->
       <div class="filter-panel" id="sales-filter-panel">
         <div class="filter-row-top">
@@ -554,6 +587,10 @@ body.edit-unlocked .locked-hint{display:none!important;}
 
     <!-- PAGE: PRICES -->
     <div class="page" id="page-prices">
+      <div class="page-header-row">
+        <span class="page-header-title">Prices</span>
+        <button class="page-edit-btn locked" id="prices-edit-btn" onclick="togglePageEdit('prices')">🔒 Edit</button>
+      </div>
       <div class="card">
         <div class="card-title">Set new price</div>
         <div class="grid-2">
@@ -921,10 +958,11 @@ function enterApp(){
   document.getElementById('app-shell').style.display='flex';
   applyRolePermissions();
   updateSessionBar();
-  setEditing(false); // always start locked
-  // Only admin can see edit toggle bar
+  setEditing(false);
+  resetPageEdits(); // reset all per-page edit states
+  // Only admin sees the global edit bar
   const editBar = document.getElementById('edit-bar');
-  if(editBar) editBar.style.display = (session && session.role==='admin') ? 'flex' : 'none';
+  if(editBar) editBar.style.display='none'; // hide global bar — using per-page now
   // Load data and sync
   loadAll();
   applyLayout();
@@ -957,49 +995,53 @@ async function syncUsersToServer(){
   }catch(e){ addLog('User sync failed: '+e.message,'warning'); }
 }
 
-// ══ EDITING TOGGLE ═══════════════════════════════════════════════════════════
-let editingEnabled = false;
+// ══ EDITING TOGGLE (per-page, Oola Spares style) ═════════════════════════════
+const pageEditState = {}; // {sales: bool, prices: bool}
 
-function setEditing(enabled){
-  editingEnabled = enabled;
-  const bar  = document.getElementById('edit-bar');
-  const btn  = document.getElementById('edit-btn');
-  const lbl  = document.getElementById('edit-bar-label');
-  if(enabled){
-    bar.className  = 'edit-bar unlocked';
-    btn.className  = 'edit-btn unlocked';
-    btn.textContent= 'Lock Editing';
-    lbl.textContent= '✏️ Editing enabled';
-    document.body.className = document.body.className.replace('edit-locked','').trim() + ' edit-unlocked';
-  } else {
-    bar.className  = 'edit-bar locked';
-    btn.className  = 'edit-btn locked';
-    btn.textContent= 'Enable Editing';
-    lbl.textContent= '🔒 View only';
-    document.body.className = document.body.className.replace('edit-unlocked','').trim() + ' edit-locked';
+function togglePageEdit(page){
+  if(!session || session.role !== 'admin'){
+    showToast('Only Admin can enable editing'); return;
   }
+  const current = pageEditState[page] || false;
+  const next = !current;
+  pageEditState[page] = next;
+  const btn = document.getElementById(page+'-edit-btn');
+  if(btn){
+    btn.className = 'page-edit-btn ' + (next ? 'unlocked' : 'locked');
+    btn.textContent = next ? '✏️ Editing' : '🔒 Edit';
+  }
+  // Re-render the page to show/hide edit controls
+  if(page === 'sales')  renderSalesLog();
+  if(page === 'prices') renderPriceHistory();
+  addLog((next?'Editing enabled':'Editing locked')+' on '+page+' by '+session.name, next?'warning':'info');
 }
 
-function toggleEditing(){
-  if(!editingEnabled){
-    // Require PIN confirmation to enable editing (except Admin who is already trusted)
-    if(session && session.role === 'admin'){
-      setEditing(true);
-      addLog('Editing enabled by '+session.name,'warning');
-    } else {
-      showToast('Only Admin can enable editing');
-    }
-  } else {
-    setEditing(false);
-    addLog('Editing locked by '+session.name,'info');
-  }
+function isEditing(page){
+  return !!(pageEditState[page]);
 }
 
-// Also guard save functions programmatically
-function requireEditing(){
-  if(!editingEnabled){ showToast('Enable editing first'); return false; }
+// Reset all page edits on login/logout
+function resetPageEdits(){
+  Object.keys(pageEditState).forEach(k => { pageEditState[k] = false; });
+  ['sales','prices'].forEach(page => {
+    const btn = document.getElementById(page+'-edit-btn');
+    if(btn){ btn.className='page-edit-btn locked'; btn.textContent='🔒 Edit'; }
+  });
+}
+
+// Guard — checks per-page editing state
+function requireEditing(page){
+  if(!page){
+    // Legacy global check
+    if(!editingEnabled){ showToast('Enable editing first'); return false; }
+    return true;
+  }
+  if(!isEditing(page)){ showToast('Tap 🔒 Edit to enable editing'); return false; }
   return true;
 }
+
+let editingEnabled = false; // kept for non-page-specific guards (users, settings)
+function setEditing(enabled){ editingEnabled = enabled; }
 
 function applyRolePermissions(){
   const role=session?session.role:'attendant';
@@ -1024,6 +1066,7 @@ function updateSessionBar(){
 function logout(){
   if(!confirm('Log out of Petrol Tracker?')) return;
   addLog(`Logout: ${session?session.name:'?'} signed out`,'info');
+  resetPageEdits();
   session=null;
   localStorage.removeItem(K.SESSION);
   showLoginScreen();
@@ -1226,7 +1269,7 @@ document.getElementById('price-date').value=todayStr();
   else { el.value=''; el.className=''; }
 }));
 async function saveNewPrice(){
-  if(!requireEditing()) return;
+  if(!requireEditing("prices")) return;
   const date=document.getElementById('price-date').value;
   const cost=parseFloat(document.getElementById('price-cost').value);
   const sell=parseFloat(document.getElementById('price-sell').value);
@@ -1259,8 +1302,8 @@ function renderPriceHistory(){
         <div><div class="price-date">Effective: ${p.effectiveDate}</div>${p.note?`<div class="price-note">${p.note}</div>`:''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           ${isCur?'<span class="price-current-badge">Current</span>':''}
-          <button class="btn-icon edit edit-only" onclick="openEditPrice('${p.id}')" title="Edit">✏️</button>
-          <button class="btn-icon del edit-only" onclick="deletePrice('${p.id}')" title="Delete">🗑</button>
+          <button class="btn-icon edit" onclick="openEditPrice('${p.id}')" title="Edit" style="display:${isEditing('prices')?'flex':'none'}">✏️</button>
+          <button class="btn-icon del" onclick="deletePrice('${p.id}')" title="Delete" style="display:${isEditing('prices')?'flex':'none'}">🗑</button>
         </div>
       </div>
       <div class="price-vals">
@@ -1437,8 +1480,8 @@ function renderSalesLog(){
       <td>${fmtShort(s.litres*s.sell)}</td>
       <td style="color:${p>=0?'#67E8F9':'var(--red)'};font-weight:600;">UGX ${fmtShort(p)}</td>
       <td><div style="display:flex;gap:4px;">
-        <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
-        <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
+        <button class="btn-icon edit" onclick="openEditSale('${s.id}')" title="Edit" style="display:${isEditing('sales')?'flex':'none'}">✏️</button>
+        <button class="btn-icon del" onclick="deleteSale('${s.id}')" title="Del" style="display:${isEditing('sales')?'flex':'none'}">🗑</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1455,8 +1498,8 @@ function renderSalesLog(){
           </div>
           <div style="display:flex;gap:5px;align-items:flex-start;">
             <div class="sale-profit ${p>=0?'pos':'neg'}">UGX ${fmtShort(p)}</div>
-            <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
-            <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
+            <button class="btn-icon edit" onclick="openEditSale('${s.id}')" title="Edit" style="display:${isEditing('sales')?'flex':'none'}">✏️</button>
+            <button class="btn-icon del" onclick="deleteSale('${s.id}')" title="Del" style="display:${isEditing('sales')?'flex':'none'}">🗑</button>
           </div>
         </div>
         <div class="sale-meta">
@@ -1469,7 +1512,7 @@ function renderSalesLog(){
     }).join('');
 }
 async function deleteSale(id){
-  if(!requireEditing()) return;
+  if(!requireEditing("sales")) return;
   if(!confirm('Delete this sale?')) return;
   const s=sales.find(x=>x.id===id);
   sales=sales.filter(x=>x.id!==id); queue=queue.filter(q=>q.id!==id);
@@ -1481,7 +1524,7 @@ async function deleteSale(id){
 
 // ══ EDIT — SALE ═══════════════════════════════════════════════════════════════
 function openEditSale(id){
-  if(!requireEditing()) return;
+  if(!requireEditing("sales")) return;
   const s=sales.find(x=>x.id===id);
   if(!s) return;
   editingType='sale'; editingId=id;
@@ -1531,7 +1574,7 @@ async function saveEditSale(){
 
 // ══ EDIT — PRICE ══════════════════════════════════════════════════════════════
 function openEditPrice(id){
-  if(!requireEditing()) return;
+  if(!requireEditing("prices")) return;
   const p=prices.find(x=>x.id===id); if(!p) return;
   editingType='price'; editingId=id;
   document.getElementById('edit-modal-title').textContent='Edit Price';
@@ -1572,7 +1615,7 @@ document.getElementById('edit-modal').addEventListener('click',e=>{ if(e.target=
 
 // ══ DELETE PRICE ══════════════════════════════════════════════════════════════
 async function deletePrice(id){
-  if(!requireEditing()) return;
+  if(!requireEditing("prices")) return;
   if(!confirm('Delete this price entry?')) return;
   const p=prices.find(x=>x.id===id);
   prices=prices.filter(x=>x.id!==id); saveP(); renderPriceHistory(); updatePriceChip();
