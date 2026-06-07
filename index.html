@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v5 — build 20260606c -->
+<!-- Petrol Tracker v5 — build 20260607 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -937,29 +937,29 @@ async function fullSync(silent=false){
   if(!silent){ setSyncDot('syncing'); showToast('Syncing…'); } else setSyncDot('syncing');
   addLog('Starting sync…','info');
   try{
-    // ── Pull prices (server is source of truth — replace local) ──
+    // ── Pull prices — server is the single source of truth ──
     const pr=await apiFetch('getPrices');
     addLog(`Received ${pr.prices?pr.prices.length:0} prices from server`,'info');
-    if(pr.prices && pr.prices.length>0){
-      // Convert server format to local format
+    if(pr.prices){
       const serverPrices=pr.prices.map(p=>({
-        id:      String(p.ID||p.id||''),
+        id:            String(p.ID||p.id||''),
         effectiveDate: String(p.EffectiveDate||p.effectiveDate||'').replace(/T.*/,'').trim(),
-        cost:    parseFloat(p.CostPerL||p.cost||0),
-        sell:    parseFloat(p.SellPerL||p.sell||0),
-        note:    String(p.Note||p.note||'')
-      })).filter(p=>p.id&&p.effectiveDate&&p.cost&&p.sell);
-      // Merge: keep local prices not yet on server, add server prices
-      const serverIds=new Set(serverPrices.map(p=>p.id));
-      const localOnly=prices.filter(p=>!serverIds.has(p.id));
-      prices=[...serverPrices,...localOnly];
+        cost:          parseFloat(p.CostPerL||p.cost||0),
+        sell:          parseFloat(p.SellPerL||p.sell||0),
+        note:          String(p.Note||p.note||'')
+      })).filter(p=>p.id && p.effectiveDate && p.cost && p.sell);
+      // Keep any local prices that haven't been pushed yet (_pending)
+      const serverIds = new Set(serverPrices.map(p=>p.id));
+      const pendingLocal = prices.filter(p=>p._pending && !serverIds.has(p.id));
+      // Server completely replaces local — no duplicates possible
+      prices = [...serverPrices, ...pendingLocal];
       saveP();
-      addLog(`Prices loaded: ${prices.length} total`,'success');
+      addLog(`Prices synced: ${prices.length} total (${serverPrices.length} from server, ${pendingLocal.length} pending local)`,'success');
     }
-    // ── Pull sales ──
+    // ── Pull sales — server replaces local, keep pending ──
     const sr=await apiFetch('getSales');
     addLog(`Received ${sr.sales?sr.sales.length:0} sales from server`,'info');
-    if(sr.sales && sr.sales.length>0){
+    if(sr.sales){
       const serverSales=sr.sales.map(s=>({
         id:        String(s.ID||s.id||''),
         date:      String(s.Date||s.date||'').replace(/T.*/,'').trim(),
@@ -971,9 +971,10 @@ async function fullSync(silent=false){
         _pending:  false
       })).filter(s=>s.id&&s.date);
       const serverIds=new Set(serverSales.map(s=>s.id));
-      const localPending=sales.filter(s=>s._pending&&!serverIds.has(s.id));
-      sales=[...serverSales,...localPending];
+      const pendingSales=sales.filter(s=>s._pending&&!serverIds.has(s.id));
+      sales=[...serverSales,...pendingSales];
       saveS();
+      addLog(`Sales synced: ${sales.length} total (${serverSales.length} from server, ${pendingSales.length} pending)`,'success');
     }
     // ── Pull settings ──
     const sg=await apiFetch('getSettings');
