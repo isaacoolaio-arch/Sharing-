@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-session -->
+<!-- Petrol Tracker v6 — build 20260607-editlock -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -236,6 +236,19 @@ body{font-family:var(--font);color:var(--text);}
 /* ── PRICE CHIP ── */
 #price-chip{background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.06);}
 
+/* ── EDITING LOCK ── */
+.edit-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;flex-shrink:0;font-size:12px;transition:background 0.2s;}
+.edit-bar.locked{background:rgba(248,113,113,0.07);border-bottom:1px solid rgba(248,113,113,0.12);color:var(--text3);}
+.edit-bar.unlocked{background:rgba(34,211,238,0.07);border-bottom:1px solid rgba(34,211,238,0.14);color:var(--teal);}
+.edit-bar-label{font-weight:500;}
+.edit-btn{height:28px;padding:0 14px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:0.03em;transition:all 0.15s;}
+.edit-btn.locked{background:rgba(248,113,113,0.15);color:var(--red);}
+.edit-btn.unlocked{background:rgba(34,211,238,0.15);color:var(--teal);}
+/* hide edit/delete/save when locked */
+body.edit-locked .edit-only{display:none!important;}
+/* show read-only hint when locked */
+body.edit-unlocked .locked-hint{display:none!important;}
+
 /* ── LOGIN SCREEN ── */
 #login-screen{
   position:fixed;inset:0;z-index:1000;
@@ -415,6 +428,11 @@ body{font-family:var(--font);color:var(--text);}
       </div>
       <button class="session-logout" onclick="logout()">↩ Log out</button>
     </div>
+    <!-- Edit toggle bar -->
+    <div class="edit-bar locked" id="edit-bar">
+      <span class="edit-bar-label" id="edit-bar-label">🔒 View only</span>
+      <button class="edit-btn locked" id="edit-btn" onclick="toggleEditing()">Enable Editing</button>
+    </div>
     <!-- Desktop header -->
     <div class="desktop-header" id="desktop-header" style="display:none;">
       <h2 id="desk-title">Record Sale</h2>
@@ -441,7 +459,8 @@ body{font-family:var(--font);color:var(--text);}
         <div class="field"><label>Attendant</label><select id="inp-attendant"><option value="">— select attendant —</option></select></div>
         <div class="field"><label>Litres sold</label><input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal"></div>
         <div class="field"><label>Gross profit preview</label><input type="text" id="preview-profit" readonly placeholder="Fill in litres above"></div>
-        <button class="btn-primary" onclick="saveSale()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Sale</button>
+        <button class="btn-primary edit-only" onclick="saveSale()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Sale</button>
+        <div class="locked-hint" style="text-align:center;padding:10px;font-size:13px;color:var(--text3);">🔒 Enable editing to save sales</div>
       </div>
       <div class="metrics-row">
         <div class="metric-card"><div class="metric-label">Today's litres</div><div class="metric-value" id="today-litres">0.0</div><div class="metric-sub">litres sold</div></div>
@@ -495,7 +514,8 @@ body{font-family:var(--font);color:var(--text);}
           <div class="field"><label>Selling price / L (UGX)</label><input type="number" id="price-sell" placeholder="e.g. 7500" inputmode="numeric"></div>
         </div>
         <div class="field"><label>Margin preview</label><input type="text" id="price-margin" readonly placeholder="Fill in prices above"></div>
-        <button class="btn-primary" onclick="saveNewPrice()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Set Price</button>
+        <button class="btn-primary edit-only" onclick="saveNewPrice()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Set Price</button>
+        <div class="locked-hint" style="text-align:center;padding:10px;font-size:13px;color:var(--text3);">🔒 Enable editing to set prices</div>
       </div>
       <div class="section-label">Price history <span class="count-badge" id="price-count">0</span></div>
       <div id="price-history-list"><div class="empty"><div class="empty-icon">🏷️</div><h3>No prices set yet</h3><p>Set your first price above.</p></div></div>
@@ -529,7 +549,7 @@ body{font-family:var(--font);color:var(--text);}
           <div class="field"><label>Confirm PIN</label><input type="password" id="u-pin2" placeholder="••••" maxlength="4" inputmode="numeric"></div>
         </div>
         <input type="hidden" id="u-edit-id">
-        <button class="btn-primary" onclick="saveUser()">
+        <button class="btn-primary edit-only" onclick="saveUser()">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Save User
         </button>
@@ -850,6 +870,10 @@ function enterApp(){
   document.getElementById('app-shell').style.display='flex';
   applyRolePermissions();
   updateSessionBar();
+  setEditing(false); // always start locked
+  // Only admin can see edit toggle bar
+  const editBar = document.getElementById('edit-bar');
+  if(editBar) editBar.style.display = (session && session.role==='admin') ? 'flex' : 'none';
   // Load data and sync
   loadAll();
   applyLayout();
@@ -880,6 +904,50 @@ async function syncUsersToServer(){
     await apiFetchWithData('syncUsers', users);
     addLog(`Users synced to server (${users.length} users)`,'info');
   }catch(e){ addLog('User sync failed: '+e.message,'warning'); }
+}
+
+// ══ EDITING TOGGLE ═══════════════════════════════════════════════════════════
+let editingEnabled = false;
+
+function setEditing(enabled){
+  editingEnabled = enabled;
+  const bar  = document.getElementById('edit-bar');
+  const btn  = document.getElementById('edit-btn');
+  const lbl  = document.getElementById('edit-bar-label');
+  if(enabled){
+    bar.className  = 'edit-bar unlocked';
+    btn.className  = 'edit-btn unlocked';
+    btn.textContent= 'Lock Editing';
+    lbl.textContent= '✏️ Editing enabled';
+    document.body.className = document.body.className.replace('edit-locked','').trim() + ' edit-unlocked';
+  } else {
+    bar.className  = 'edit-bar locked';
+    btn.className  = 'edit-btn locked';
+    btn.textContent= 'Enable Editing';
+    lbl.textContent= '🔒 View only';
+    document.body.className = document.body.className.replace('edit-unlocked','').trim() + ' edit-locked';
+  }
+}
+
+function toggleEditing(){
+  if(!editingEnabled){
+    // Require PIN confirmation to enable editing (except Admin who is already trusted)
+    if(session && session.role === 'admin'){
+      setEditing(true);
+      addLog('Editing enabled by '+session.name,'warning');
+    } else {
+      showToast('Only Admin can enable editing');
+    }
+  } else {
+    setEditing(false);
+    addLog('Editing locked by '+session.name,'info');
+  }
+}
+
+// Also guard save functions programmatically
+function requireEditing(){
+  if(!editingEnabled){ showToast('Enable editing first'); return false; }
+  return true;
 }
 
 function applyRolePermissions(){
@@ -925,7 +993,7 @@ function renderUsersPage(){
       </div>
       <div class="user-card-actions">
         <button class="btn-icon" style="background:rgba(59,130,246,0.15);color:#93C5FD;" onclick="editUser('${u.id}')">✏️</button>
-        ${u.id!=='admin_default'?`<button class="btn-icon btn-del" onclick="deleteUser('${u.id}')">🗑</button>`:''}
+        ${u.id!=='admin_default'?`<button class="btn-icon btn-del edit-only" onclick="deleteUser('${u.id}')">🗑</button>`:''}
       </div>
     </div>`).join('');
   // Reset form
@@ -938,6 +1006,7 @@ function renderUsersPage(){
 }
 
 async function saveUser(){
+  if(!requireEditing()) return;
   const name=document.getElementById('u-name').value.trim();
   const role=document.getElementById('u-role').value;
   const pin=document.getElementById('u-pin').value.trim();
@@ -983,6 +1052,7 @@ function editUser(id){
 }
 
 async function deleteUser(id){
+  if(!requireEditing()) return;
   const u=users.find(x=>x.id===id); if(!u) return;
   if(!confirm(`Delete user "${u.name}"? They will no longer be able to log in.`)) return;
   users=users.filter(x=>x.id!==id);
@@ -1105,6 +1175,7 @@ document.getElementById('price-date').value=todayStr();
   else { el.value=''; el.className=''; }
 }));
 async function saveNewPrice(){
+  if(!requireEditing()) return;
   const date=document.getElementById('price-date').value;
   const cost=parseFloat(document.getElementById('price-cost').value);
   const sell=parseFloat(document.getElementById('price-sell').value);
@@ -1137,8 +1208,8 @@ function renderPriceHistory(){
         <div><div class="price-date">Effective: ${p.effectiveDate}</div>${p.note?`<div class="price-note">${p.note}</div>`:''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           ${isCur?'<span class="price-current-badge">Current</span>':''}
-          <button class="btn-icon edit" onclick="openEditPrice('${p.id}')" title="Edit">✏️</button>
-          <button class="btn-icon del" onclick="deletePrice('${p.id}')" title="Delete">🗑</button>
+          <button class="btn-icon edit edit-only" onclick="openEditPrice('${p.id}')" title="Edit">✏️</button>
+          <button class="btn-icon del edit-only" onclick="deletePrice('${p.id}')" title="Delete">🗑</button>
         </div>
       </div>
       <div class="price-vals">
@@ -1166,6 +1237,7 @@ function updatePreview(){
   else { el.value=''; el.className=''; }
 }
 async function saveSale(){
+  if(!requireEditing()) return;
   const date=document.getElementById('inp-date').value;
   const att=document.getElementById('inp-attendant').value;
   const litres=parseFloat(document.getElementById('inp-litres').value);
@@ -1237,8 +1309,8 @@ function renderSalesLog(){
       <td>${fmtShort(s.litres*s.sell)}</td>
       <td style="color:${p>=0?'#67E8F9':'var(--red)'};font-weight:600;">UGX ${fmtShort(p)}</td>
       <td><div style="display:flex;gap:4px;">
-        <button class="btn-icon edit" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
-        <button class="btn-icon del" onclick="deleteSale('${s.id}')" title="Delete">🗑</button>
+        <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
+        <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Delete">🗑</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1251,8 +1323,8 @@ function renderSalesLog(){
           <div><div class="sale-date">${s.date} <span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span> ${pend}</div><div class="sale-att">${s.attendant}</div></div>
           <div style="display:flex;gap:5px;align-items:flex-start;">
             <div class="sale-profit ${p>=0?'pos':'neg'}">UGX ${fmtShort(p)}</div>
-            <button class="btn-icon edit" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
-            <button class="btn-icon del" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
+            <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
+            <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
           </div>
         </div>
         <div class="sale-meta"><span>${s.litres.toFixed(2)}L</span><span>·</span><span>Cost ${fmt(s.cost)}/L</span><span>·</span><span>Sell ${fmt(s.sell)}/L</span></div>
@@ -1260,6 +1332,7 @@ function renderSalesLog(){
     }).join('');
 }
 async function deleteSale(id){
+  if(!requireEditing()) return;
   if(!confirm('Delete this sale?')) return;
   const s=sales.find(x=>x.id===id);
   sales=sales.filter(x=>x.id!==id); queue=queue.filter(q=>q.id!==id);
@@ -1271,6 +1344,7 @@ async function deleteSale(id){
 
 // ══ EDIT — SALE ═══════════════════════════════════════════════════════════════
 function openEditSale(id){
+  if(!requireEditing()) return;
   const s=sales.find(x=>x.id===id);
   if(!s) return;
   editingType='sale'; editingId=id;
@@ -1320,6 +1394,7 @@ async function saveEditSale(){
 
 // ══ EDIT — PRICE ══════════════════════════════════════════════════════════════
 function openEditPrice(id){
+  if(!requireEditing()) return;
   const p=prices.find(x=>x.id===id); if(!p) return;
   editingType='price'; editingId=id;
   document.getElementById('edit-modal-title').textContent='Edit Price';
@@ -1360,6 +1435,7 @@ document.getElementById('edit-modal').addEventListener('click',e=>{ if(e.target=
 
 // ══ DELETE PRICE ══════════════════════════════════════════════════════════════
 async function deletePrice(id){
+  if(!requireEditing()) return;
   if(!confirm('Delete this price entry?')) return;
   const p=prices.find(x=>x.id===id);
   prices=prices.filter(x=>x.id!==id); saveP(); renderPriceHistory(); updatePriceChip();
@@ -1425,7 +1501,7 @@ function saveLocalSettings(){
 function renderAttList(){
   const el=document.getElementById('att-list');
   if(!cfg.attendants.length){ el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">No attendants added.</div>'; return; }
-  el.innerHTML=cfg.attendants.map((a,i)=>`<div class="att-item"><span>${a}</span><button class="btn-icon del" onclick="removeAttendant(${i})">×</button></div>`).join('');
+  el.innerHTML=cfg.attendants.map((a,i)=>`<div class="att-item"><span>${a}</span><button class="btn-icon del edit-only" onclick="removeAttendant(${i})">×</button></div>`).join('');
 }
 function addAttendant(){
   const inp=document.getElementById('att-inp'), name=inp.value.trim();
