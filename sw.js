@@ -1,5 +1,5 @@
 // Petrol Tracker SW v3 — bump this string to force update on all devices
-const CACHE = 'petrol-tracker-v7';
+const CACHE = 'petrol-tracker-v8';
 
 const ASSETS = [
   './',

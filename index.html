@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v5 — build 20260607b -->
+<!-- Petrol Tracker v5 — build 20260607c -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -406,6 +406,12 @@ body{font-family:var(--font);color:var(--text);}
           <div class="settings-row-hint" style="margin-bottom:8px;">Fetches raw price data from server and logs it to Activity Log.</div>
           <button class="btn-sm" onclick="debugPrices()">Debug prices</button>
           <pre id="debug-out" style="margin-top:8px;font-size:10px;color:var(--text3);white-space:pre-wrap;word-break:break-all;max-height:120px;overflow-y:auto;background:var(--surface2);padding:8px;border-radius:6px;display:none;"></pre>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-label">🧹 Clean duplicate records</div>
+          <div class="settings-row-hint" style="margin-bottom:8px;">Removes duplicate price and sale entries from Google Sheets. Run once to fix existing duplicates.</div>
+          <button class="btn-sm" onclick="cleanDuplicates()">Clean duplicates</button>
+          <div id="clean-result" style="margin-top:8px;font-size:12px;color:var(--teal);display:none;"></div>
         </div>
         <div class="settings-row">
           <div class="settings-row-label">Clear local cache</div>
@@ -1042,6 +1048,26 @@ async function debugPrices(){
     showToast(`Got ${r.prices?r.prices.length:0} prices from server`);
   }catch(e){ el.textContent='ERROR: '+e.message; addLog('Debug prices error: '+e.message,'error'); }
 }
+async function cleanDuplicates(){
+  if(!cfg.apiUrl){ showToast('No API URL set'); return; }
+  if(!confirm('This will remove duplicate records from Google Sheets. Continue?')) return;
+  const el=document.getElementById('clean-result');
+  el.style.display='block'; el.textContent='Cleaning…'; el.style.color='var(--text3)';
+  try{
+    const rp=await apiFetch('removeDuplicatePrices');
+    const rs=await apiFetch('removeDuplicateSales');
+    const msg=`Done — removed ${rp.removed||0} duplicate price rows and ${rs.removed||0} duplicate sale rows.`;
+    el.textContent=msg; el.style.color='var(--teal)';
+    addLog(msg,'success');
+    showToast('Duplicates cleaned ✓');
+    // Re-sync to get clean data
+    await fullSync(true);
+  }catch(e){
+    el.textContent='Error: '+e.message; el.style.color='var(--red)';
+    addLog('Clean duplicates failed: '+e.message,'error');
+  }
+}
+
 function exportCSV(){
   if(!sales.length){ showToast('No data to export'); return; }
   const h='Date,Attendant,Shift,Litres,Cost/L,Sell/L,Revenue,GrossProfit';
