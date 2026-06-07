@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-payouts -->
+<!-- Petrol Tracker v6 — build 20260607-tx-sheets -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1119,9 +1119,13 @@ function enterApp(){
   updatePriceChip();
   updateQueueBanner();
   addLog(`Signed in as ${session.name} (${ROLE_LABELS[session.role]})`,'success');
-  // Push local users to server if admin (ensures all devices get them)
+  // Push local users to server if admin
   if(session.role==='admin' && navigator.onLine && cfg.apiUrl){
     syncUsersToServer();
+    // Also push any local transactions not yet on server
+    if(transactions.length>0){
+      apiFetchWithData('syncTransactions', transactions).catch(()=>{});
+    }
   }
   if(navigator.onLine && cfg.apiUrl) fullSync(true);
   // Navigate to first allowed page
@@ -1833,15 +1837,16 @@ function savePayout(){
   const amount  = parseFloat(document.getElementById('pt-amount').value);
   const note    = document.getElementById('pt-note').value.trim();
   const date    = document.getElementById('pt-date').value;
-  if(!month)         { showToast('Select a month'); return; }
+  if(!month)            { showToast('Select a month'); return; }
   if(!amount||amount<=0){ showToast('Enter a valid amount'); return; }
-  const tx = { id:uid(), type:'payout', partner, month, amount, note, date, createdAt:new Date().toISOString() };
+  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+  const tx = { id:uid(), type:'payout', partner, partnerName:name, month, amount, note, date, createdAt:new Date().toISOString() };
   transactions.push(tx); saveTx();
   closePayout();
   renderProfit();
-  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
   addLog(`Payout recorded: ${name} · UGX ${fmt(amount)} · ${monthLabel(month)}`,'success');
   showToast('Payout saved ✓');
+  if(cfg.apiUrl){ apiFetchWithData('saveTransaction', tx).catch(e=>addLog('Tx sync failed: '+e.message,'error')); }
 }
 
 function saveDeduction(){
@@ -1850,16 +1855,17 @@ function saveDeduction(){
   const amount  = parseFloat(document.getElementById('dt-amount').value);
   const reason  = document.getElementById('dt-reason').value.trim();
   const date    = document.getElementById('dt-date').value;
-  if(!month)         { showToast('Select a month'); return; }
+  if(!month)            { showToast('Select a month'); return; }
   if(!amount||amount<=0){ showToast('Enter a valid amount'); return; }
-  if(!reason)        { showToast('Enter a reason'); return; }
-  const tx = { id:uid(), type:'deduction', partner, month, amount, note:reason, date, createdAt:new Date().toISOString() };
+  if(!reason)           { showToast('Enter a reason'); return; }
+  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+  const tx = { id:uid(), type:'deduction', partner, partnerName:name, month, amount, note:reason, date, createdAt:new Date().toISOString() };
   transactions.push(tx); saveTx();
   closeDeduct();
   renderProfit();
-  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
   addLog(`Deduction: ${name} · UGX ${fmt(amount)} · ${reason}`,'warning');
   showToast('Deduction saved ✓');
+  if(cfg.apiUrl){ apiFetchWithData('saveTransaction', tx).catch(e=>addLog('Tx sync failed: '+e.message,'error')); }
 }
 
 function deleteTransaction(id){
@@ -1867,6 +1873,7 @@ function deleteTransaction(id){
   transactions = transactions.filter(t=>t.id!==id);
   saveTx(); renderProfit();
   showToast('Deleted');
+  if(cfg.apiUrl){ apiFetch('deleteTransaction',{id}).catch(()=>{}); }
 }
 
 function closeMonth(partner){
@@ -1881,8 +1888,10 @@ function closeMonth(partner){
   const paid = getTxPaid(partner, month);
   const balance = share - deductions - paid;
   if(balance > 0){
-    const tx = {id:uid(),type:'payout',partner,month,amount:balance,note:'Month closed — final payment',date:todayStr(),createdAt:new Date().toISOString()};
+    const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+    const tx = {id:uid(),type:'payout',partner,partnerName:name,month,amount:balance,note:'Month closed — final payment',date:todayStr(),createdAt:new Date().toISOString()};
     transactions.push(tx); saveTx();
+    if(cfg.apiUrl){ apiFetchWithData('saveTransaction', tx).catch(()=>{}); }
   }
   addLog(`Month closed: ${name} · ${monthLabel(month)} · Balance UGX ${fmt(balance)}`,'success');
   showToast(`${monthLabel(month)} closed for ${name} ✓`);
@@ -2126,6 +2135,35 @@ async function fullSync(silent=false){
         addLog('Users pushed to server (first sync)','info');
       }
     }catch(e){ addLog('Users sync skipped: '+e.message,'warning'); }
+    // ── Pull transactions — server is source of truth ──
+    try{
+      const tr=await apiFetch('getTransactions');
+      if(tr.transactions){
+        const serverTx=tr.transactions.map(t=>({
+          id:          String(t.ID||t.id||''),
+          type:        String(t.Type||t.type||'payout'),
+          partner:     String(t.Partner||t.partner||'a'),
+          partnerName: String(t.PartnerName||t.partnerName||''),
+          month:       String(t.Month||t.month||''),
+          amount:      parseFloat(t.Amount||t.amount||0),
+          note:        String(t.Note||t.note||''),
+          date:        safeDate(t.Date||t.date),
+          createdAt:   String(t.CreatedAt||t.createdAt||'')
+        })).filter(t=>t.id&&t.month);
+        if(serverTx.length>0){
+          // merge — keep local pending ones not yet on server
+          const serverIds=new Set(serverTx.map(t=>t.id));
+          const localOnly=transactions.filter(t=>!serverIds.has(t.id));
+          transactions=[...serverTx,...localOnly];
+          saveTx();
+          addLog(`Transactions synced: ${transactions.length} records`,'info');
+        } else if(transactions.length>0){
+          // push local to server
+          await apiFetchWithData('syncTransactions', transactions);
+          addLog('Transactions pushed to server','info');
+        }
+      }
+    }catch(e){ addLog('Transactions sync skipped: '+e.message,'warning'); }
     await flushQueue();
     setSyncDot('ok');
     if(!silent) showToast('Sync complete ✓');
