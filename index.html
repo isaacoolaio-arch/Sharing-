@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-dedup -->
+<!-- Petrol Tracker v6 — build 20260607-session -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -665,15 +665,26 @@ function loadUsers(){
 function saveUsers(){ localStorage.setItem(K.USERS, JSON.stringify(users)); }
 function loadSession(){
   try{
+    // Check if this is a new browser session (tab was closed and reopened)
+    const appOpen = sessionStorage.getItem('app_open');
+    if(!appOpen){
+      // New session (app was closed) — clear login and require re-login
+      localStorage.removeItem(K.SESSION);
+      return;
+    }
     const s=JSON.parse(localStorage.getItem(K.SESSION));
     if(s && s.loginTime){
-      // Session expires after 12 hours
+      // Session expires after 12 hours even within same tab session
       if(Date.now()-s.loginTime < 12*60*60*1000) session=s;
       else localStorage.removeItem(K.SESSION);
     }
   }catch(e){}
 }
-function saveSession(){ localStorage.setItem(K.SESSION, JSON.stringify(session)); }
+function saveSession(){
+  localStorage.setItem(K.SESSION, JSON.stringify(session));
+  // Mark app as open in this browser tab session
+  sessionStorage.setItem('app_open','1');
+}
 let editingType=null, editingId=null;
 
 function loadAll(){
