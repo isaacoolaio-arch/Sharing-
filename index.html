@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-pageedit -->
+<!-- Petrol Tracker v6 — build 20260607-payouts -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -249,7 +249,37 @@ body{font-family:var(--font);color:var(--text);}
 /* ── PRICE CHIP ── */
 #price-chip{background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#93C5FD;display:none;box-shadow:0 0 10px rgba(79,195,247,0.06);}
 
-/* ── PAGE HEADER ROW (Oola Spares style) ── */
+/* ── PARTNER FULL CARDS ── */
+.partner-full-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;margin-bottom:4px;}
+.partner-full-card.a-card{border-left:3px solid #2563EB;}
+.partner-full-card.b-card{border-left:3px solid #0891B2;}
+.pcf-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.pcf-breakdown{background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;}
+.pcf-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);}
+.pcf-row.balance{border-top:1px solid var(--border2);padding-top:6px;margin-top:2px;font-weight:600;color:var(--text);}
+.pcf-val{font-family:var(--mono);font-weight:500;color:var(--text);}
+.pcf-val.red{color:var(--red);}
+.pcf-val.green{color:var(--teal);}
+.pcf-val.bold{font-weight:700;font-size:15px;}
+.pcf-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.success-btn{background:rgba(34,211,238,0.1)!important;color:var(--teal)!important;border-color:rgba(34,211,238,0.25)!important;}
+
+/* Profit transaction items */
+.pt-item{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.pt-item-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.pt-payout{background:rgba(34,211,238,0.12);}
+.pt-deduct{background:rgba(248,113,113,0.12);}
+.pt-item-body{flex:1;}
+.pt-item-name{font-size:13px;font-weight:600;color:var(--text);}
+.pt-item-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.pt-item-amount{font-family:var(--mono);font-weight:600;font-size:14px;}
+.pt-payout-amount{color:var(--teal);}
+.pt-deduct-amount{color:var(--red);}
+.pt-item-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;}
+.pt-item-del:hover{color:var(--red);}
+
+/* Sheet link */
+#sheet-link-row a:hover{background:rgba(59,130,246,0.18);border-color:rgba(79,195,247,0.35);}
 .page-header-row{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:14px;
@@ -560,11 +590,10 @@ body.edit-unlocked .locked-hint{display:none!important;}
 
     <!-- PAGE: PROFIT -->
     <div class="page" id="page-profit">
+      <!-- Filters -->
       <div class="filter-panel">
         <div class="filter-row-top">
-          <select id="profit-filter" onchange="onProfitFilterChange()">
-            <option value="">All time</option>
-          </select>
+          <select id="profit-filter" onchange="onProfitFilterChange()"><option value="">All time</option></select>
           <button class="btn-sm" onclick="toggleDateRange('profit')">📅 Date range</button>
         </div>
         <div class="date-range-row" id="profit-range-row" style="display:none;">
@@ -573,16 +602,133 @@ body.edit-unlocked .locked-hint{display:none!important;}
           <button class="btn-sm" onclick="clearDateRange('profit')">Clear</button>
         </div>
       </div>
+
+      <!-- Summary metrics -->
       <div class="metrics-row">
         <div class="metric-card"><div class="metric-label">Litres sold</div><div class="metric-value" id="ps-litres">0</div><div class="metric-sub" id="ps-period">all time</div></div>
         <div class="metric-card"><div class="metric-label">Gross profit</div><div class="metric-value" id="ps-gross">0</div><div class="metric-sub">UGX</div></div>
       </div>
-      <div class="card-title">Partner profit share</div>
-      <div class="partner-block">
-        <div class="partner-row-ui a"><div><div class="pname a" id="ps-name-a">Partner A</div><div class="ppct">60% of gross profit</div></div><div class="pamount a" id="ps-a">UGX 0</div></div>
-        <div class="partner-row-ui b"><div><div class="pname b" id="ps-name-b">Partner B</div><div class="ppct">40% of gross profit</div></div><div class="pamount b" id="ps-b">UGX 0</div></div>
+
+      <!-- Partner cards with payout status -->
+      <div class="card-title" style="margin-bottom:10px;">Partner profit share</div>
+      <div class="partner-full-card a-card" id="partner-card-a">
+        <div class="pcf-top">
+          <div>
+            <div class="pname a" id="ps-name-a">Partner A</div>
+            <div class="ppct">60% of gross profit</div>
+          </div>
+          <div class="pamount a" id="ps-a">UGX 0</div>
+        </div>
+        <div class="pcf-breakdown">
+          <div class="pcf-row"><span>Gross share</span><span class="pcf-val" id="ps-a-gross">UGX 0</span></div>
+          <div class="pcf-row deduct"><span>Deductions</span><span class="pcf-val red" id="ps-a-deduct">- UGX 0</span></div>
+          <div class="pcf-row paid"><span>Paid out</span><span class="pcf-val green" id="ps-a-paid">- UGX 0</span></div>
+          <div class="pcf-row balance"><span>Balance due</span><span class="pcf-val bold" id="ps-a-balance">UGX 0</span></div>
+        </div>
+        <div class="pcf-actions" id="ps-a-actions">
+          <button class="btn-sm" onclick="openPayout('a')">💰 Record payout</button>
+          <button class="btn-sm" onclick="openDeduction('a')">➖ Add deduction</button>
+          <button class="btn-sm success-btn" id="ps-a-close-btn" onclick="closeMonth('a')" style="display:none;">✅ Close month</button>
+        </div>
       </div>
-      <div class="card"><div class="card-title">Monthly breakdown</div><div class="chart-container"><canvas id="profitChart" role="img" aria-label="Monthly profit chart"></canvas></div></div>
+
+      <div class="partner-full-card b-card" id="partner-card-b" style="margin-top:10px;">
+        <div class="pcf-top">
+          <div>
+            <div class="pname b" id="ps-name-b">Partner B</div>
+            <div class="ppct">40% of gross profit</div>
+          </div>
+          <div class="pamount b" id="ps-b">UGX 0</div>
+        </div>
+        <div class="pcf-breakdown">
+          <div class="pcf-row"><span>Gross share</span><span class="pcf-val" id="ps-b-gross">UGX 0</span></div>
+          <div class="pcf-row deduct"><span>Deductions</span><span class="pcf-val red" id="ps-b-deduct">- UGX 0</span></div>
+          <div class="pcf-row paid"><span>Paid out</span><span class="pcf-val green" id="ps-b-paid">- UGX 0</span></div>
+          <div class="pcf-row balance"><span>Balance due</span><span class="pcf-val bold" id="ps-b-balance">UGX 0</span></div>
+        </div>
+        <div class="pcf-actions" id="ps-b-actions">
+          <button class="btn-sm" onclick="openPayout('b')">💰 Record payout</button>
+          <button class="btn-sm" onclick="openDeduction('b')">➖ Add deduction</button>
+          <button class="btn-sm success-btn" id="ps-b-close-btn" onclick="closeMonth('b')" style="display:none;">✅ Close month</button>
+        </div>
+      </div>
+
+      <!-- Payout / Deduction history -->
+      <div class="section-label" style="margin-top:16px;">
+        Transactions <span class="count-badge" id="pt-count">0</span>
+        <button class="btn-sm edit-only" onclick="openPayout('a')" style="font-size:11px;height:28px;padding:0 10px;">+ Add</button>
+      </div>
+      <div id="profit-transactions"></div>
+
+      <!-- Monthly breakdown chart -->
+      <div class="card" style="margin-top:12px;">
+        <div class="card-title">Monthly breakdown</div>
+        <div class="chart-container"><canvas id="profitChart" role="img" aria-label="Monthly profit chart"></canvas></div>
+      </div>
+
+      <!-- Sheet link (Admin only) -->
+      <div id="sheet-link-row" style="display:none;margin-top:8px;text-align:center;">
+        <a id="sheet-link" href="#" target="_blank" style="font-size:12px;color:#93C5FD;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(59,130,246,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:20px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Google Sheet
+        </a>
+      </div>
+    </div>
+
+    <!-- PAYOUT MODAL -->
+    <div class="modal-overlay" id="payout-modal" style="display:none;" onclick="if(event.target===this)closePayout()">
+      <div class="modal">
+        <div class="modal-title"><span id="payout-title">Record Payout</span><button class="modal-close" onclick="closePayout()">×</button></div>
+        <div style="padding:0 16px 16px;">
+          <div class="field"><label>Partner</label>
+            <select id="pt-partner">
+              <option value="a" id="pt-opt-a">Partner A</option>
+              <option value="b" id="pt-opt-b">Partner B</option>
+            </select>
+          </div>
+          <div class="field"><label>Month</label>
+            <select id="pt-month"><option value="">Select month</option></select>
+          </div>
+          <div class="field"><label>Amount (UGX)</label>
+            <input type="number" id="pt-amount" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="field"><label>Note (optional)</label>
+            <input type="text" id="pt-note" placeholder="e.g. Cash payment, Mobile money">
+          </div>
+          <div class="field"><label>Date</label>
+            <input type="date" id="pt-date">
+          </div>
+          <button class="btn-primary" onclick="savePayout()">💰 Save Payout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEDUCTION MODAL -->
+    <div class="modal-overlay" id="deduct-modal" style="display:none;" onclick="if(event.target===this)closeDeduct()">
+      <div class="modal">
+        <div class="modal-title"><span>Add Deduction</span><button class="modal-close" onclick="closeDeduct()">×</button></div>
+        <div style="padding:0 16px 16px;">
+          <div class="field"><label>Deduct from</label>
+            <select id="dt-partner">
+              <option value="a" id="dt-opt-a">Partner A</option>
+              <option value="b" id="dt-opt-b">Partner B</option>
+            </select>
+          </div>
+          <div class="field"><label>Month</label>
+            <select id="dt-month"><option value="">Select month</option></select>
+          </div>
+          <div class="field"><label>Amount (UGX)</label>
+            <input type="number" id="dt-amount" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="field"><label>Reason</label>
+            <input type="text" id="dt-reason" placeholder="e.g. Fuel taken, Advance, Repairs">
+          </div>
+          <div class="field"><label>Date</label>
+            <input type="date" id="dt-date">
+          </div>
+          <button class="btn-primary" onclick="saveDeduction()">➖ Save Deduction</button>
+        </div>
+      </div>
     </div>
 
     <!-- PAGE: PRICES -->
@@ -734,7 +880,7 @@ body.edit-unlocked .locked-hint{display:none!important;}
 // IMPORTANT: Leave empty — each device enters the URL once via the setup screen
 // OR paste your current working Apps Script URL here to skip that step
 const DEFAULT_API = '';
-const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2', LOG:'pt_log_v1', USERS:'pt_users_v1', SESSION:'pt_session_v1' };
+const K = { SALES:'pt_sales_v2', PRICES:'pt_prices_v2', SETTINGS:'pt_settings_v2', QUEUE:'pt_queue_v2', LOG:'pt_log_v1', USERS:'pt_users_v1', SESSION:'pt_session_v1', TRANSACTIONS:'pt_transactions_v1' };
 const PAGE_TITLES = { record:'Record Sale', sales:'Sales Log', profit:'Profit Share', prices:'Prices', log:'Activity Log', users:'User Management', settings:'Settings' };
 
 // ── Role permissions ──────────────────────────────────────────────────────────
@@ -749,7 +895,7 @@ const ROLE_COLORS  = { admin:'avatar-admin', partner:'avatar-partner', attendant
 const ROLE_BADGE   = { admin:'role-badge-admin', partner:'role-badge-partner', attendant:'role-badge-attendant' };
 
 // ══ STATE ═════════════════════════════════════════════════════════════════════
-let sales=[], prices=[], queue=[], actLog=[];
+let sales=[], prices=[], queue=[], actLog=[], transactions=[];
 let cfg = { apiUrl:DEFAULT_API, nameA:'Partner A', nameB:'Partner B', attendants:[] };
 
 // ── Users & session ───────────────────────────────────────────────────────────
@@ -800,6 +946,7 @@ function loadAll(){
   try{ prices = JSON.parse(localStorage.getItem(K.PRICES) ||'[]'); }catch(e){ prices=[]; }
   try{ queue  = JSON.parse(localStorage.getItem(K.QUEUE)  ||'[]'); }catch(e){ queue=[]; }
   try{ actLog = JSON.parse(localStorage.getItem(K.LOG)    ||'[]'); }catch(e){ actLog=[]; }
+  try{ transactions = JSON.parse(localStorage.getItem(K.TRANSACTIONS)||'[]'); }catch(e){ transactions=[]; }
   try{
     const s=JSON.parse(localStorage.getItem(K.SETTINGS));
     if(s) cfg=Object.assign(cfg,s);
@@ -812,6 +959,7 @@ const saveP  =()=>localStorage.setItem(K.PRICES,  JSON.stringify(prices));
 const saveQ  =()=>localStorage.setItem(K.QUEUE,   JSON.stringify(queue));
 const saveCfg=()=>localStorage.setItem(K.SETTINGS,JSON.stringify(cfg));
 const saveLog=()=>localStorage.setItem(K.LOG,     JSON.stringify(actLog.slice(0,500)));
+const saveTx =()=>localStorage.setItem(K.TRANSACTIONS, JSON.stringify(transactions));
 
 // ══ LOGIN SYSTEM ══════════════════════════════════════════════════════════════
 let pinBuffer = '';
@@ -1625,6 +1773,122 @@ async function deletePrice(id){
 
 // ══ PROFIT ════════════════════════════════════════════════════════════════════
 let chartInst=null;
+// ══ PROFIT TRANSACTIONS ═══════════════════════════════════════════════════════
+// tx: {id, type:'payout'|'deduction', partner:'a'|'b', month:'YYYY-MM', amount, note, date, createdAt}
+
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/16ShOdgNxSQdzb8ZMsWPz4DvqW_VNldtKSNRhA9H9glA/edit';
+
+function getTxForMonth(partner, month){
+  return transactions.filter(t => t.partner===partner && t.month===month);
+}
+function getTxPaid(partner, month){
+  return getTxForMonth(partner, month).filter(t=>t.type==='payout').reduce((a,t)=>a+t.amount,0);
+}
+function getTxDeductions(partner, month){
+  return getTxForMonth(partner, month).filter(t=>t.type==='deduction').reduce((a,t)=>a+t.amount,0);
+}
+
+// ── Payout modal ──────────────────────────────────────────────────────────────
+let txModalPartner = 'a';
+function openPayout(partner){
+  txModalPartner = partner;
+  const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
+  document.getElementById('payout-title').textContent = 'Record Payout';
+  document.getElementById('pt-opt-a').textContent = nA;
+  document.getElementById('pt-opt-b').textContent = nB;
+  document.getElementById('pt-partner').value = partner;
+  document.getElementById('pt-date').value = todayStr();
+  document.getElementById('pt-amount').value = '';
+  document.getElementById('pt-note').value = '';
+  buildTxMonthOpts('pt-month');
+  document.getElementById('payout-modal').style.display='flex';
+}
+function closePayout(){ document.getElementById('payout-modal').style.display='none'; }
+
+function openDeduction(partner){
+  txModalPartner = partner;
+  const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
+  document.getElementById('dt-opt-a').textContent = nA;
+  document.getElementById('dt-opt-b').textContent = nB;
+  document.getElementById('dt-partner').value = partner;
+  document.getElementById('dt-date').value = todayStr();
+  document.getElementById('dt-amount').value = '';
+  document.getElementById('dt-reason').value = '';
+  buildTxMonthOpts('dt-month');
+  document.getElementById('deduct-modal').style.display='flex';
+}
+function closeDeduct(){ document.getElementById('deduct-modal').style.display='none'; }
+
+function buildTxMonthOpts(elId){
+  const sel = document.getElementById(elId);
+  const months = allMonths();
+  sel.innerHTML = '<option value="">Select month</option>' +
+    months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  if(months.length) sel.value = months[0]; // default to latest month
+}
+
+function savePayout(){
+  const partner = document.getElementById('pt-partner').value;
+  const month   = document.getElementById('pt-month').value;
+  const amount  = parseFloat(document.getElementById('pt-amount').value);
+  const note    = document.getElementById('pt-note').value.trim();
+  const date    = document.getElementById('pt-date').value;
+  if(!month)         { showToast('Select a month'); return; }
+  if(!amount||amount<=0){ showToast('Enter a valid amount'); return; }
+  const tx = { id:uid(), type:'payout', partner, month, amount, note, date, createdAt:new Date().toISOString() };
+  transactions.push(tx); saveTx();
+  closePayout();
+  renderProfit();
+  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+  addLog(`Payout recorded: ${name} · UGX ${fmt(amount)} · ${monthLabel(month)}`,'success');
+  showToast('Payout saved ✓');
+}
+
+function saveDeduction(){
+  const partner = document.getElementById('dt-partner').value;
+  const month   = document.getElementById('dt-month').value;
+  const amount  = parseFloat(document.getElementById('dt-amount').value);
+  const reason  = document.getElementById('dt-reason').value.trim();
+  const date    = document.getElementById('dt-date').value;
+  if(!month)         { showToast('Select a month'); return; }
+  if(!amount||amount<=0){ showToast('Enter a valid amount'); return; }
+  if(!reason)        { showToast('Enter a reason'); return; }
+  const tx = { id:uid(), type:'deduction', partner, month, amount, note:reason, date, createdAt:new Date().toISOString() };
+  transactions.push(tx); saveTx();
+  closeDeduct();
+  renderProfit();
+  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+  addLog(`Deduction: ${name} · UGX ${fmt(amount)} · ${reason}`,'warning');
+  showToast('Deduction saved ✓');
+}
+
+function deleteTransaction(id){
+  if(!confirm('Delete this transaction?')) return;
+  transactions = transactions.filter(t=>t.id!==id);
+  saveTx(); renderProfit();
+  showToast('Deleted');
+}
+
+function closeMonth(partner){
+  const month = document.getElementById('profit-filter').value;
+  if(!month){ showToast('Select a specific month first'); return; }
+  const name = partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+  if(!confirm(`Mark ${monthLabel(month)} as fully paid for ${name}?`)) return;
+  // Calculate remaining balance and create a payout for it
+  const gross = getProfitFiltered().reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0);
+  const share = partner==='a' ? gross*0.6 : gross*0.4;
+  const deductions = getTxDeductions(partner, month);
+  const paid = getTxPaid(partner, month);
+  const balance = share - deductions - paid;
+  if(balance > 0){
+    const tx = {id:uid(),type:'payout',partner,month,amount:balance,note:'Month closed — final payment',date:todayStr(),createdAt:new Date().toISOString()};
+    transactions.push(tx); saveTx();
+  }
+  addLog(`Month closed: ${name} · ${monthLabel(month)} · Balance UGX ${fmt(balance)}`,'success');
+  showToast(`${monthLabel(month)} closed for ${name} ✓`);
+  renderProfit();
+}
+
 function renderProfit(){
   const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
   document.getElementById('ps-name-a').textContent=nA;
@@ -1632,12 +1896,73 @@ function renderProfit(){
   const filtered=getProfitFiltered();
   const tL=filtered.reduce((a,s)=>a+s.litres,0);
   const tP=filtered.reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0);
+  const shareA=tP*0.6, shareB=tP*0.4;
   document.getElementById('ps-litres').textContent=tL.toFixed(1);
   document.getElementById('ps-gross').textContent=fmtShort(tP);
   document.getElementById('ps-period').textContent=getPeriodLabel('profit');
-  document.getElementById('ps-a').textContent='UGX '+fmt(tP*0.6);
-  document.getElementById('ps-b').textContent='UGX '+fmt(tP*0.4);
-  // Chart always shows all months for context
+  document.getElementById('ps-a').textContent='UGX '+fmt(shareA);
+  document.getElementById('ps-b').textContent='UGX '+fmt(shareB);
+
+  // Get selected month for payout tracking
+  const month = document.getElementById('profit-filter').value;
+
+  // Partner A breakdown
+  const deductA = month ? getTxDeductions('a',month) : 0;
+  const paidA   = month ? getTxPaid('a',month) : 0;
+  const balA    = shareA - deductA - paidA;
+  document.getElementById('ps-a-gross').textContent   = 'UGX '+fmt(shareA);
+  document.getElementById('ps-a-deduct').textContent  = '- UGX '+fmt(deductA);
+  document.getElementById('ps-a-paid').textContent    = '- UGX '+fmt(paidA);
+  document.getElementById('ps-a-balance').textContent = 'UGX '+fmt(balA);
+  document.getElementById('ps-a-balance').style.color = balA<=0?'var(--teal)':'var(--text)';
+
+  // Partner B breakdown
+  const deductB = month ? getTxDeductions('b',month) : 0;
+  const paidB   = month ? getTxPaid('b',month) : 0;
+  const balB    = shareB - deductB - paidB;
+  document.getElementById('ps-b-gross').textContent   = 'UGX '+fmt(shareB);
+  document.getElementById('ps-b-deduct').textContent  = '- UGX '+fmt(deductB);
+  document.getElementById('ps-b-paid').textContent    = '- UGX '+fmt(paidB);
+  document.getElementById('ps-b-balance').textContent = 'UGX '+fmt(balB);
+  document.getElementById('ps-b-balance').style.color = balB<=0?'var(--teal)':'var(--text)';
+
+  // Show close month button only when a specific month is selected
+  document.getElementById('ps-a-close-btn').style.display = month?'inline-flex':'none';
+  document.getElementById('ps-b-close-btn').style.display = month?'inline-flex':'none';
+
+  // Sheet link (admin only)
+  const slRow = document.getElementById('sheet-link-row');
+  if(slRow){
+    slRow.style.display = (session&&session.role==='admin') ? 'block' : 'none';
+    document.getElementById('sheet-link').href = SHEET_URL;
+  }
+
+  // Transactions list
+  const txFilter = month
+    ? transactions.filter(t=>t.month===month)
+    : transactions;
+  const txSorted = [...txFilter].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  document.getElementById('pt-count').textContent = txSorted.length;
+  const txList = document.getElementById('profit-transactions');
+  if(!txSorted.length){
+    txList.innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--text3);">${month?'No transactions for this month':'No transactions yet'}</div>`;
+  } else {
+    txList.innerHTML = txSorted.map(t=>{
+      const name = t.partner==='a'?(cfg.nameA||'Partner A'):(cfg.nameB||'Partner B');
+      const isPayout = t.type==='payout';
+      return `<div class="pt-item">
+        <div class="pt-item-icon ${isPayout?'pt-payout':'pt-deduct'}">${isPayout?'💰':'➖'}</div>
+        <div class="pt-item-body">
+          <div class="pt-item-name">${name} · ${isPayout?'Payout':'Deduction'}</div>
+          <div class="pt-item-meta">${monthLabel(t.month)} · ${t.date}${t.note?' · '+t.note:''}</div>
+        </div>
+        <div class="pt-item-amount ${isPayout?'pt-payout-amount':'pt-deduct-amount'}">${isPayout?'+':'-'} UGX ${fmt(t.amount)}</div>
+        <button class="pt-item-del" onclick="deleteTransaction('${t.id}')">🗑</button>
+      </div>`;
+    }).join('');
+  }
+
+  // Chart
   const months=allMonths().reverse();
   if(!months.length) return;
   const mData=months.map(m=>Math.round(sales.filter(s=>monthKey(s.date)===m).reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0)));
