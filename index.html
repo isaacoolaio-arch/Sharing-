@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Petrol Tracker v6 — build 20260607-editlock -->
+<!-- Petrol Tracker v6 — build 20260607-shifts-icon -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Petrol Tracker">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230D1525'/><text y='75' x='50' text-anchor='middle' font-size='65'>⛽</text></svg>">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Petrol Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,6 +155,18 @@ body{font-family:var(--font);color:var(--text);}
 /* ── FILTER ROW ── */
 .filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
 .filter-row select{flex:1;height:38px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface);padding:0 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
+
+/* ── FILTER PANEL ── */
+.filter-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:12px;margin-bottom:12px;}
+.filter-row-top{display:flex;gap:8px;align-items:center;margin-bottom:0;}
+.filter-row-top select{flex:1;height:36px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface2);padding:0 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
+.date-range-row{display:flex;gap:8px;align-items:flex-end;margin-top:10px;flex-wrap:wrap;}
+.range-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px;}
+.range-field label{font-size:11px;color:var(--text3);font-weight:600;}
+.range-field input{height:36px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface2);padding:0 8px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;width:100%;}
+.range-field input:focus{border-color:var(--neon);}
+.active-filter-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);color:#93C5FD;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-top:8px;}
+.active-filter-chip button{background:none;border:none;color:#93C5FD;cursor:pointer;font-size:14px;line-height:1;padding:0;}
 
 /* ── SALE ITEMS ── */
 .sale-item{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:13px;margin-bottom:9px;}
@@ -454,7 +467,7 @@ body.edit-unlocked .locked-hint{display:none!important;}
         <div class="card-title">New Sale Entry</div>
         <div class="grid-2">
           <div class="field"><label>Date</label><input type="date" id="inp-date"></div>
-          <div class="field"><label>Shift</label><select id="inp-shift"><option value="Day">☀️ Day</option><option value="Night">🌙 Night</option></select></div>
+          <div class="field"><label>Shift</label><select id="inp-shift"><option value="Morning">🌅 Morning</option><option value="Evening">🌆 Evening</option></select></div>
         </div>
         <div class="field"><label>Attendant</label><select id="inp-attendant"><option value="">— select attendant —</option></select></div>
         <div class="field"><label>Litres sold</label><input type="number" id="inp-litres" placeholder="0.00" step="0.01" min="0" inputmode="decimal"></div>
@@ -470,13 +483,39 @@ body.edit-unlocked .locked-hint{display:none!important;}
 
     <!-- PAGE: SALES LOG -->
     <div class="page" id="page-sales">
-      <div class="metrics-row">
-        <div class="metric-card"><div class="metric-label">Total litres</div><div class="metric-value" id="log-litres">0</div><div class="metric-sub" id="log-period">all time</div></div>
-        <div class="metric-card accent"><div class="metric-label">Total profit</div><div class="metric-value" id="log-profit">0</div><div class="metric-sub">UGX</div></div>
+      <!-- Filter bar -->
+      <div class="filter-panel" id="sales-filter-panel">
+        <div class="filter-row-top">
+          <select id="log-filter" onchange="onSalesFilterChange()">
+            <option value="">All time</option>
+          </select>
+          <button class="btn-sm" id="range-toggle-btn" onclick="toggleDateRange('sales')">📅 Date range</button>
+          <button class="btn-sm" onclick="exportCSV()">Export</button>
+        </div>
+        <div class="date-range-row" id="sales-range-row" style="display:none;">
+          <div class="range-field"><label>From</label><input type="date" id="sales-from" onchange="renderSalesLog()"></div>
+          <div class="range-field"><label>To</label><input type="date" id="sales-to" onchange="renderSalesLog()"></div>
+          <button class="btn-sm" onclick="clearDateRange('sales')">Clear</button>
+        </div>
+        <div class="filter-row-top" style="gap:6px;flex-wrap:wrap;">
+          <select id="log-attendant" onchange="renderSalesLog()" style="flex:1;min-width:120px;height:34px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface);padding:0 8px;font-size:12px;color:var(--text);outline:none;">
+            <option value="">All attendants</option>
+          </select>
+          <select id="log-shift" onchange="renderSalesLog()" style="flex:1;min-width:100px;height:34px;border:1px solid rgba(79,195,247,0.18);border-radius:var(--radius-sm);background:var(--surface);padding:0 8px;font-size:12px;color:var(--text);outline:none;">
+            <option value="">All shifts</option>
+            <option value="Morning">🌅 Morning</option>
+            <option value="Evening">🌆 Evening</option>
+          </select>
+        </div>
       </div>
-      <div class="filter-row">
-        <select id="log-filter" onchange="renderSalesLog()"><option value="">All time</option></select>
-        <button class="btn-sm" onclick="exportCSV()">Export CSV</button>
+      <!-- Summary metrics -->
+      <div class="metrics-row" style="grid-template-columns:repeat(2,1fr);margin-bottom:10px;">
+        <div class="metric-card"><div class="metric-label">Litres sold</div><div class="metric-value" id="log-litres">0</div><div class="metric-sub" id="log-period">all time</div></div>
+        <div class="metric-card accent"><div class="metric-label">Gross profit</div><div class="metric-value" id="log-profit">0</div><div class="metric-sub">UGX</div></div>
+      </div>
+      <div class="metrics-row" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px;">
+        <div class="metric-card"><div class="metric-label">Revenue</div><div class="metric-value" id="log-revenue">0</div><div class="metric-sub">UGX</div></div>
+        <div class="metric-card"><div class="metric-label">Entries</div><div class="metric-value" id="log-count">0</div><div class="metric-sub">records</div></div>
       </div>
       <!-- Desktop table -->
       <div class="sales-table-wrap" id="sales-table-wrap">
@@ -488,7 +527,19 @@ body.edit-unlocked .locked-hint{display:none!important;}
 
     <!-- PAGE: PROFIT -->
     <div class="page" id="page-profit">
-      <div class="filter-row"><select id="profit-filter" onchange="renderProfit()"><option value="">All time</option></select></div>
+      <div class="filter-panel">
+        <div class="filter-row-top">
+          <select id="profit-filter" onchange="onProfitFilterChange()">
+            <option value="">All time</option>
+          </select>
+          <button class="btn-sm" onclick="toggleDateRange('profit')">📅 Date range</button>
+        </div>
+        <div class="date-range-row" id="profit-range-row" style="display:none;">
+          <div class="range-field"><label>From</label><input type="date" id="profit-from" onchange="renderProfit()"></div>
+          <div class="range-field"><label>To</label><input type="date" id="profit-to" onchange="renderProfit()"></div>
+          <button class="btn-sm" onclick="clearDateRange('profit')">Clear</button>
+        </div>
+      </div>
       <div class="metrics-row">
         <div class="metric-card"><div class="metric-label">Litres sold</div><div class="metric-value" id="ps-litres">0</div><div class="metric-sub" id="ps-period">all time</div></div>
         <div class="metric-card"><div class="metric-label">Gross profit</div><div class="metric-value" id="ps-gross">0</div><div class="metric-sub">UGX</div></div>
@@ -1148,7 +1199,7 @@ function switchPage(p){
   const sb=document.getElementById('side-'+p); if(sb) sb.classList.add('active');
   const th=document.getElementById('desk-title'); if(th) th.textContent=PAGE_TITLES[p]||'';
   if(p==='record')  { populateAttDropdown(); renderTodaySummary(); updatePriceChip(); }
-  if(p==='sales')   { buildFilterOpts('log-filter'); renderSalesLog(); }
+  if(p==='sales')   { buildFilterOpts('log-filter'); populateSalesAttFilter(); renderSalesLog(); }
   if(p==='profit')  { buildFilterOpts('profit-filter'); renderProfit(); }
   if(p==='prices')  { renderPriceHistory(); }
   if(p==='log')     { renderLog(); }
@@ -1281,53 +1332,139 @@ function buildFilterOpts(id){
   const sel=document.getElementById(id), cur=sel.value;
   sel.innerHTML='<option value="">All time</option>'+allMonths().map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');
 }
+
+// ── Filter helpers ────────────────────────────────────────────────────────────
+function toggleDateRange(tab){
+  const row=document.getElementById(tab+'-range-row');
+  const btn=document.getElementById(tab==='sales'?'range-toggle-btn':null)||null;
+  const visible=row.style.display!=='none';
+  row.style.display=visible?'none':'flex';
+  if(visible){ clearDateRange(tab); }
+}
+function clearDateRange(tab){
+  const from=document.getElementById(tab+'-from');
+  const to=document.getElementById(tab+'-to');
+  if(from) from.value='';
+  if(to) to.value='';
+  if(tab==='sales') renderSalesLog();
+  else renderProfit();
+}
+function onSalesFilterChange(){
+  // When month selected, clear date range
+  const v=document.getElementById('log-filter').value;
+  if(v){ document.getElementById('sales-from').value=''; document.getElementById('sales-to').value=''; }
+  renderSalesLog();
+}
+function onProfitFilterChange(){
+  const v=document.getElementById('profit-filter').value;
+  if(v){ document.getElementById('profit-from').value=''; document.getElementById('profit-to').value=''; }
+  renderProfit();
+}
+
+function getSalesFiltered(){
+  const month    = document.getElementById('log-filter').value;
+  const from     = document.getElementById('sales-from')?.value||'';
+  const to       = document.getElementById('sales-to')?.value||'';
+  const attendant= document.getElementById('log-attendant')?.value||'';
+  const shift    = document.getElementById('log-shift')?.value||'';
+  return sales.filter(s=>{
+    if(month && monthKey(s.date)!==month) return false;
+    if(from  && s.date < from)            return false;
+    if(to    && s.date > to)              return false;
+    if(attendant && s.attendant!==attendant) return false;
+    if(shift && s.shift!==shift)          return false;
+    return true;
+  });
+}
+function getProfitFiltered(){
+  const month = document.getElementById('profit-filter').value;
+  const from  = document.getElementById('profit-from')?.value||'';
+  const to    = document.getElementById('profit-to')?.value||'';
+  return sales.filter(s=>{
+    if(month && monthKey(s.date)!==month) return false;
+    if(from  && s.date < from)            return false;
+    if(to    && s.date > to)              return false;
+    return true;
+  });
+}
+function getPeriodLabel(tab){
+  const month = document.getElementById(tab+'-filter').value;
+  const from  = document.getElementById(tab+'-from')?.value||'';
+  const to    = document.getElementById(tab+'-to')?.value||'';
+  if(from && to)   return `${from} → ${to}`;
+  if(from)         return `From ${from}`;
+  if(to)           return `Up to ${to}`;
+  if(month)        return monthLabel(month);
+  return 'all time';
+}
+
+// ── Attendant dropdown in sales filter ───────────────────────────────────────
+function populateSalesAttFilter(){
+  const sel=document.getElementById('log-attendant');
+  if(!sel) return;
+  const cur=sel.value;
+  const names=[...new Set(sales.map(s=>s.attendant).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All attendants</option>'+names.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n}</option>`).join('');
+}
+
 function renderSalesLog(){
-  const filter=document.getElementById('log-filter').value;
-  const filtered=filter?sales.filter(s=>monthKey(s.date)===filter):sales;
-  const sorted=[...filtered].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  const tL=filtered.reduce((a,s)=>a+s.litres,0);
-  const tP=filtered.reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0);
-  document.getElementById('log-litres').textContent=tL.toFixed(1);
-  document.getElementById('log-profit').textContent=fmtShort(tP);
-  document.getElementById('log-period').textContent=filter?monthLabel(filter):'all time';
-  // Desktop table
+  populateSalesAttFilter();
+  const filtered = getSalesFiltered();
+  const sorted   = [...filtered].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const tL = filtered.reduce((a,s)=>a+s.litres,0);
+  const tP = filtered.reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0);
+  const tR = filtered.reduce((a,s)=>a+s.litres*s.sell,0);
+  document.getElementById('log-litres').textContent  = tL.toFixed(1);
+  document.getElementById('log-profit').textContent  = fmtShort(tP);
+  document.getElementById('log-revenue').textContent = fmtShort(tR);
+  document.getElementById('log-count').textContent   = filtered.length;
+  document.getElementById('log-period').textContent  = getPeriodLabel('log');
+
   const tbody=document.getElementById('sales-tbody');
-  // Mobile list
-  const list=document.getElementById('sales-list');
+  const list =document.getElementById('sales-list');
   if(!sorted.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">No sales yet</td></tr>`;
-    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>No sales yet</h3><p>Record your first sale.</p></div>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">No sales for this filter</td></tr>`;
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>No sales</h3><p>Try a different filter.</p></div>`;
     return;
   }
   tbody.innerHTML=sorted.map(s=>{
     const p=(s.sell-s.cost)*s.litres;
-    const pend=s._pending?`<span class="badge badge-pending" style="margin-left:4px;">pending</span>`:'';
+    const pend=s._pending?`<span class="badge badge-pending">pending</span>`:'';
     return `<tr>
-      <td>${s.date}${pend}</td><td>${s.attendant}</td>
-      <td><span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span></td>
+      <td>${s.date} ${pend}</td><td>${s.attendant}</td>
+      <td><span class="badge badge-${s.shift==='Morning'?'day':'night'}">${s.shift}</span></td>
       <td>${s.litres.toFixed(2)}</td><td>${fmt(s.cost)}</td><td>${fmt(s.sell)}</td>
       <td>${fmtShort(s.litres*s.sell)}</td>
       <td style="color:${p>=0?'#67E8F9':'var(--red)'};font-weight:600;">UGX ${fmtShort(p)}</td>
       <td><div style="display:flex;gap:4px;">
         <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
-        <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Delete">🗑</button>
+        <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
       </div></td>
     </tr>`;
   }).join('');
+
   list.innerHTML=`<div class="section-label">Entries <span class="count-badge">${sorted.length}</span></div>`+
     sorted.map(s=>{
       const p=(s.sell-s.cost)*s.litres;
       const pend=s._pending?`<span class="badge badge-pending">pending</span>`:'';
       return `<div class="sale-item">
         <div class="sale-top">
-          <div><div class="sale-date">${s.date} <span class="badge badge-${s.shift==='Day'?'day':'night'}">${s.shift}</span> ${pend}</div><div class="sale-att">${s.attendant}</div></div>
+          <div>
+            <div class="sale-date">${s.date} <span class="badge badge-${s.shift==='Morning'?'day':'night'}">${s.shift}</span> ${pend}</div>
+            <div class="sale-att">${s.attendant}</div>
+          </div>
           <div style="display:flex;gap:5px;align-items:flex-start;">
             <div class="sale-profit ${p>=0?'pos':'neg'}">UGX ${fmtShort(p)}</div>
             <button class="btn-icon edit edit-only" onclick="openEditSale('${s.id}')" title="Edit">✏️</button>
             <button class="btn-icon del edit-only" onclick="deleteSale('${s.id}')" title="Del">🗑</button>
           </div>
         </div>
-        <div class="sale-meta"><span>${s.litres.toFixed(2)}L</span><span>·</span><span>Cost ${fmt(s.cost)}/L</span><span>·</span><span>Sell ${fmt(s.sell)}/L</span></div>
+        <div class="sale-meta">
+          <span>${s.litres.toFixed(2)}L</span><span>·</span>
+          <span>Cost ${fmt(s.cost)}/L</span><span>·</span>
+          <span>Sell ${fmt(s.sell)}/L</span><span>·</span>
+          <span>Rev ${fmtShort(s.litres*s.sell)}</span>
+        </div>
       </div>`;
     }).join('');
 }
@@ -1353,8 +1490,8 @@ function openEditSale(id){
     <div class="grid-2">
       <div class="field"><label>Date</label><input type="date" id="em-date" value="${s.date}"></div>
       <div class="field"><label>Shift</label><select id="em-shift">
-        <option${s.shift==='Day'?' selected':''}>Day</option>
-        <option${s.shift==='Night'?' selected':''}>Night</option>
+        <option${s.shift==='Morning'?' selected':''}>Morning</option>
+        <option${s.shift==='Evening'?' selected':''}>Evening</option>
       </select></div>
     </div>
     <div class="field"><label>Attendant</label><select id="em-att">
@@ -1449,15 +1586,15 @@ function renderProfit(){
   const nA=cfg.nameA||'Partner A', nB=cfg.nameB||'Partner B';
   document.getElementById('ps-name-a').textContent=nA;
   document.getElementById('ps-name-b').textContent=nB;
-  const filter=document.getElementById('profit-filter').value;
-  const filtered=filter?sales.filter(s=>monthKey(s.date)===filter):sales;
+  const filtered=getProfitFiltered();
   const tL=filtered.reduce((a,s)=>a+s.litres,0);
   const tP=filtered.reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0);
   document.getElementById('ps-litres').textContent=tL.toFixed(1);
   document.getElementById('ps-gross').textContent=fmtShort(tP);
-  document.getElementById('ps-period').textContent=filter?monthLabel(filter):'all time';
+  document.getElementById('ps-period').textContent=getPeriodLabel('profit');
   document.getElementById('ps-a').textContent='UGX '+fmt(tP*0.6);
   document.getElementById('ps-b').textContent='UGX '+fmt(tP*0.4);
+  // Chart always shows all months for context
   const months=allMonths().reverse();
   if(!months.length) return;
   const mData=months.map(m=>Math.round(sales.filter(s=>monthKey(s.date)===m).reduce((a,s)=>a+(s.sell-s.cost)*s.litres,0)));
@@ -1471,7 +1608,7 @@ function renderProfit(){
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11},color:'#94B8D4'}}},
-      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:'#4A7A9B'}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:'#4A7A9B',maxRotation:45}},
               y:{stacked:true,ticks:{callback:v=>fmtShort(v),font:{size:11},color:'#4A7A9B'},grid:{color:'rgba(79,195,247,0.05)'}}}
     }
   });
@@ -1581,7 +1718,7 @@ async function fullSync(silent=false){
         id:        String(s.ID||s.id||''),
         date:      safeDate(s.Date||s.date),
         attendant: String(s.Attendant||s.attendant||''),
-        shift:     String(s.Shift||s.shift||'Day'),
+        shift:     String(s.Shift||s.shift||'Morning'),
         litres:    parseFloat(s.Litres||s.litres||0),
         cost:      parseFloat(s.CostPerL||s.cost||0),
         sell:      parseFloat(s.SellPerL||s.sell||0),
