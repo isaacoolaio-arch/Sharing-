@@ -1,4 +1,9 @@
-const CACHE = 'oola-spares-v5';
+const CACHE = 'oola-spares-v6';
+
+// Respond to SKIP_WAITING message from the page
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 const ASSETS = [
   './manifest.json',

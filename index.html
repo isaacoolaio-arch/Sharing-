@@ -5115,7 +5115,7 @@ function showSettings() {
     <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px">
       <div class="card-title" style="margin-bottom:12px">My PIN</div>
       <label>Change My PIN <span style="font-size:11px;color:var(--text3);font-weight:400">(leave blank to keep current)</span></label>
-      <input id="cfg-pin" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" />
+      <input id="cfg-pin" type="text" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" style="-webkit-text-security:disc;text-security:disc" autocomplete="new-password" />
       <button class="btn btn-primary" style="margin-top:4px" onclick="saveSettingsForm()">Save</button>
     </div>
 
@@ -5138,7 +5138,7 @@ function showSettings() {
         <label>Display Name</label>
         <input id="cfg-u1name" value="${s.user1Name || ''}" placeholder="e.g. John" style="margin-bottom:8px" />
         <label>PIN <span style="font-size:11px;color:var(--text3);font-weight:400">(4 digits · blank = disable login)</span></label>
-        <input id="cfg-u1pin" type="password" inputmode="numeric" maxlength="4" placeholder="${s.user1Pin ? '••••  (set)' : 'Not set'}" />
+        <input id="cfg-u1pin" type="text" inputmode="numeric" maxlength="4" placeholder="${s.user1Pin ? '••••  (set)' : 'Not set'}" style="-webkit-text-security:disc;text-security:disc" autocomplete="new-password" />
       </div>
 
       <!-- User 2 -->
@@ -5155,7 +5155,7 @@ function showSettings() {
         <label>Display Name</label>
         <input id="cfg-u2name" value="${s.user2Name || ''}" placeholder="e.g. Mary" style="margin-bottom:8px" />
         <label>PIN <span style="font-size:11px;color:var(--text3);font-weight:400">(4 digits · blank = disable login)</span></label>
-        <input id="cfg-u2pin" type="password" inputmode="numeric" maxlength="4" placeholder="${s.user2Pin ? '••••  (set)' : 'Not set'}" />
+        <input id="cfg-u2pin" type="text" inputmode="numeric" maxlength="4" placeholder="${s.user2Pin ? '••••  (set)' : 'Not set'}" style="-webkit-text-security:disc;text-security:disc" autocomplete="new-password" />
       </div>
 
       <button class="btn btn-primary" onclick="saveAllSettings()">💾 Save All</button>
@@ -5333,14 +5333,34 @@ function toast(msg, type = 'success') {
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Use relative path so it works on any host
     navigator.serviceWorker.register('./sw.js', { scope: './' })
       .then(r => {
         console.log('SW registered, scope:', r.scope);
-        // Force update if new version
         r.update();
+
+        // When a new SW is found, notify it to skip waiting
+        r.addEventListener('updatefound', () => {
+          const newWorker = r.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New SW installed — reload to get fresh code immediately
+              console.log('[SW] New version available — reloading');
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
       })
       .catch(e => console.log('SW failed:', e));
+
+    // When SW takes control, reload the page to use new cache
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('[SW] Controller changed — reloading for fresh version');
+        window.location.reload();
+      }
+    });
   });
 }
 
