@@ -693,10 +693,13 @@ async function smartApi(action, data = {}) {
         }
       } catch(e) {
         console.log('Server failed, using cache:', e.message);
+        // Show a connection warning if this is a fresh install with empty cache
+        _maybeShowConnectionWarning(e);
       }
     }
     // Offline or server failed — serve from IndexedDB cache
-    return await serveFromCache(action, data);
+    const cached = await serveFromCache(action, data);
+    return cached;
   }
 
   // Write actions — try server, queue if offline
@@ -713,6 +716,54 @@ async function smartApi(action, data = {}) {
   await IDB.addToQueue(action, data);
   // Apply locally too
   return applyLocalWrite(action, data);
+}
+
+let _connectionWarningShown = false;
+function _maybeShowConnectionWarning(err) {
+  if (_connectionWarningShown) return;
+  _connectionWarningShown = true;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const msg = err && err.message ? err.message : 'Unknown error';
+
+  // Show a prominent banner instead of silently failing
+  const banner = document.createElement('div');
+  banner.id = 'conn-warning';
+  banner.style.cssText = `
+    position:fixed;bottom:80px;left:12px;right:12px;z-index:500;
+    background:#1a1200;border:1px solid rgba(240,165,0,.4);border-radius:12px;
+    padding:14px 16px;font-size:13px;line-height:1.7;
+    box-shadow:0 4px 20px rgba(0,0,0,.6)
+  `;
+  banner.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div>
+        <div style="font-weight:800;color:var(--accent);margin-bottom:4px">⚠️ Could not load data from server</div>
+        ${isIOS && isStandalone ? `
+          <div style="color:var(--text2)">
+            On iPhone, make sure you have an active internet connection.<br>
+            If connected, open the app in <strong>Safari</strong> first to allow network access, then return here.
+          </div>
+          <button onclick="window.open(location.href,'_blank')" style="margin-top:8px;background:var(--accent);
+            color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;
+            font-weight:800;cursor:pointer">Open in Safari</button>
+        ` : `
+          <div style="color:var(--text2)">Check your internet connection and tap Retry.</div>
+        `}
+      </div>
+      <button onclick="document.getElementById('conn-warning').remove();_connectionWarningShown=false;"
+        style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;
+          padding:0;flex-shrink:0">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="document.getElementById('conn-warning').remove();_connectionWarningShown=false;loadAll().then(()=>{renderDashboard();toast('Data loaded ✓','success');})"
+        style="flex:1;background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.3);
+          color:var(--accent);border-radius:8px;padding:8px;font-size:13px;
+          font-weight:800;cursor:pointer;font-family:var(--font)">↻ Retry</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
 }
 
 async function serveFromCache(action, data) {
@@ -803,8 +854,27 @@ async function applyLocalWrite(action, data) {
 async function callServer(action, data = {}) {
   if (LOCAL_MODE) return localApi(action, data);
   const params = new URLSearchParams({ action, ...data });
-  const res = await fetch(API_URL + '?' + params, { signal: AbortSignal.timeout(8000) });
-  return res.json();
+
+  // Manual timeout using AbortController (iOS 15 doesn't support AbortSignal.timeout)
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000); // 15s for slow connections
+
+  try {
+    const res = await fetch(API_URL + '?' + params, {
+      method: 'GET',
+      mode: 'cors',                  // explicit CORS — required for iOS standalone PWA
+      credentials: 'omit',           // no cookies — avoids preflight issues
+      redirect: 'follow',            // follow Apps Script redirect (script.google.com → googleusercontent.com)
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch(e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Request timed out — check your internet connection');
+    throw e;
+  }
 }
 
 // ── AUTO SYNC ──
@@ -5180,39 +5250,95 @@ function installApp() {
     // iOS doesn't support beforeinstallprompt — show manual instructions
     showModal(`
       <div class="modal-header">
-        <div class="modal-title">Install on iPhone / iPad</div>
+        <div class="modal-title">Install on iPhone</div>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <div style="font-size:13px;color:var(--text2);line-height:2;padding:4px 0">
-        To install Oola Spares on your iPhone or iPad:
+
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);
+        border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:12px;
+        color:#3b82f6;line-height:1.6">
+        📱 These steps are for <strong>iPhone 7 Plus using Safari</strong>.<br>
+        Must be opened in Safari — Chrome cannot install apps on iPhone.
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0">
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="background:var(--accent);color:#000;font-weight:900;font-size:13px;
-            width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;flex-shrink:0;margin-top:2px">1</div>
-          <div style="font-size:13px;color:var(--fg)">Open this page in <strong>Safari</strong> (not Chrome)</div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;font-weight:900;font-size:12px;
+            min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;margin-top:1px">1</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--fg)">Open in Safari</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.6">
+              Copy the app URL and paste it in <strong>Safari</strong> (the blue compass icon). 
+              If you're already in Safari, you're good.
+            </div>
+          </div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="background:var(--accent);color:#000;font-weight:900;font-size:13px;
-            width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;flex-shrink:0;margin-top:2px">2</div>
-          <div style="font-size:13px;color:var(--fg)">Tap the <strong>Share</strong> button at the bottom of Safari <span style="font-size:16px">⬆️</span></div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;font-weight:900;font-size:12px;
+            min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;margin-top:1px">2</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--fg)">Tap the Share button</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.6">
+              Look at the <strong>bottom of your screen</strong> — tap the middle icon that looks like 
+              a box with an arrow pointing up <span style="font-size:15px">⬆️</span>
+            </div>
+            <div style="margin-top:8px;background:var(--surface2);border-radius:8px;
+              padding:10px 12px;font-size:12px;color:var(--text3);line-height:1.6">
+              💡 If the toolbar is hidden, scroll up slightly and it will reappear at the bottom
+            </div>
+          </div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="background:var(--accent);color:#000;font-weight:900;font-size:13px;
-            width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;flex-shrink:0;margin-top:2px">3</div>
-          <div style="font-size:13px;color:var(--fg)">Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;font-weight:900;font-size:12px;
+            min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;margin-top:1px">3</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--fg)">Find "Add to Home Screen"</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.6">
+              A menu slides up from the bottom. <strong>Scroll down</strong> in that menu — 
+              look for <strong>"Add to Home Screen"</strong> with a white square icon with a plus (+).
+            </div>
+            <div style="margin-top:8px;background:var(--surface2);border-radius:8px;
+              padding:10px 12px;font-size:12px;color:var(--text3);line-height:1.6">
+              💡 It's usually about 4–5 items down in the share sheet list
+            </div>
+          </div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="background:var(--accent);color:#000;font-weight:900;font-size:13px;
-            width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;flex-shrink:0;margin-top:2px">4</div>
-          <div style="font-size:13px;color:var(--fg)">Tap <strong>Add</strong> — the app icon appears on your home screen</div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;font-weight:900;font-size:12px;
+            min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;margin-top:1px">4</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--fg)">Name it and tap Add</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.6">
+              A screen appears showing the app name <strong>"Oola Spares"</strong> and icon. 
+              Tap <strong>Add</strong> in the top-right corner.
+            </div>
+          </div>
         </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--green);color:#000;font-weight:900;font-size:12px;
+            min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;margin-top:1px">✓</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--green)">Done!</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:3px;line-height:1.6">
+              The Oola Spares icon appears on your home screen. 
+              Tap it to open the app — it runs fullscreen like a native app, no Safari bar.
+            </div>
+          </div>
+        </div>
+
       </div>
-      <button class="btn btn-primary" onclick="closeModal()">Got it</button>
+
+      <button class="btn btn-primary" onclick="closeModal()">Got it ✓</button>
     `);
     return;
   }

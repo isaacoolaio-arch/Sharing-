@@ -1,4 +1,4 @@
-const CACHE = 'oola-spares-v3';
+const CACHE = 'oola-spares-v4';
 
 // Files to cache for offline use
 const ASSETS = [
