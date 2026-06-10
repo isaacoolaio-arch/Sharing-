@@ -1,24 +1,51 @@
 {
-  "name": "Petrol Tracker",
-  "short_name": "Petrol",
-  "description": "Daily petrol sales tracker with partner profit sharing",
-  "start_url": "./index.html",
+  "name": "Oola Spares",
+  "short_name": "Oola Spares",
+  "description": "Motorcycle Spare Parts Inventory Manager",
+  "id": "/Spares/",
+  "start_url": "/Spares/index.html",
+  "scope": "/Spares/",
   "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#0A0E1A",
-  "background_color": "#070B14",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/Spares/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/Spares/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/Spares/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Record Sale",
+      "short_name": "Sale",
+      "description": "Quickly record a new sale",
+      "url": "/Spares/index.html?action=sale",
+      "icons": [{ "src": "/Spares/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add Purchase",
+      "short_name": "Purchase",
+      "description": "Record a stock purchase",
+      "url": "/Spares/index.html?action=purchase",
+      "icons": [{ "src": "/Spares/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
