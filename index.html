@@ -674,26 +674,25 @@ function updateOnlineStatus() {
 async function smartApi(action, data = {}) {
   // Read actions — serve from cache if offline
   const readActions = ['getParts','getSuppliers','getSupplierRates','getSales',
-                       'getPurchases','getChecklist','getSettings','verifyPin'];
+                       'getPurchases','getChecklist','getSettings','verifyPin',
+                       'getMyNotifications','verifyEditOtp','generateEditOtp',
+                       'requestEditOtp','verifyEditOtp'];
 
   if (readActions.includes(action)) {
     if (isOnline) {
       try {
         const result = await callServer(action, data);
-        if (result.success !== false) {
-          // Cache the fresh data
-          const storeMap = {
-            getParts: 'parts', getSuppliers: 'suppliers', getSupplierRates: 'supplierRates',
-            getSales: 'sales', getPurchases: 'purchases', getChecklist: 'checklist'
-          };
-          if (storeMap[action] && result.data) {
-            await IDB.setAll(storeMap[action], result.data);
-          }
-          return result;
+        // Cache fresh read data
+        const storeMap = {
+          getParts: 'parts', getSuppliers: 'suppliers', getSupplierRates: 'supplierRates',
+          getSales: 'sales', getPurchases: 'purchases', getChecklist: 'checklist'
+        };
+        if (storeMap[action] && result.data) {
+          await IDB.setAll(storeMap[action], result.data);
         }
+        return result;
       } catch(e) {
         console.log('Server failed, using cache:', e.message);
-        // Show a connection warning if this is a fresh install with empty cache
         _maybeShowConnectionWarning(e);
       }
     }
@@ -702,19 +701,20 @@ async function smartApi(action, data = {}) {
     return cached;
   }
 
-  // Write actions — try server, queue if offline
+  // Write actions — try server
   if (isOnline) {
     try {
       const result = await callServer(action, data);
-      if (result.success !== false) return result;
+      // Always return server result (including errors) — don't silently queue on server error
+      return result;
     } catch(e) {
-      console.log('Write failed, queuing:', action);
+      // Only queue on network failure (fetch threw), not on server-returned errors
+      console.log('Write failed, queuing:', action, e.message);
     }
   }
 
-  // Queue for later sync
+  // Queue for later sync (offline only)
   await IDB.addToQueue(action, data);
-  // Apply locally too
   return applyLocalWrite(action, data);
 }
 
@@ -890,8 +890,10 @@ async function autoSync() {
 
   // Filter out read-only actions that should never be in the queue
   const writeActions = ['savePart','deletePart','saveSupplier','deleteSupplier',
-    'saveSale','savePurchase','saveChecklistItem','updateChecklistStatus',
-    'deleteChecklistItem','saveSupplierRate','deleteSupplierRate','saveSettings'];
+    'saveSale','updateSale','deleteSale','savePurchase','updatePurchase','deletePurchase',
+    'saveChecklistItem','updateChecklistStatus','deleteChecklistItem',
+    'saveSupplierRate','deleteSupplierRate','saveSettings',
+    'sendOtpNotification','markNotificationRead','requestEditOtp'];
 
   const writeQueue = queue.filter(item => writeActions.includes(item.action));
 
@@ -1476,8 +1478,10 @@ async function initApp() {
   if (!LOCAL_MODE && isOnline) {
     const queue = await IDB.getQueue();
     const writeActions = ['savePart','deletePart','saveSupplier','deleteSupplier',
-      'saveSale','savePurchase','saveChecklistItem','updateChecklistStatus',
-      'deleteChecklistItem','saveSupplierRate','deleteSupplierRate','saveSettings'];
+      'saveSale','updateSale','deleteSale','savePurchase','updatePurchase','deletePurchase',
+      'saveChecklistItem','updateChecklistStatus','deleteChecklistItem',
+      'saveSupplierRate','deleteSupplierRate','saveSettings',
+      'sendOtpNotification','markNotificationRead','requestEditOtp'];
     const writeQueue = (queue || []).filter(item => writeActions.includes(item.action));
 
     if (writeQueue.length > 0) {
@@ -5031,6 +5035,18 @@ function showSettings() {
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
+    <!-- Visible to ALL users -->
+    <button onclick="testConnection()" style="
+      display:flex;align-items:center;gap:12px;width:100%;
+      background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);
+      border-radius:12px;padding:14px;margin-bottom:16px;cursor:pointer;text-align:left;">
+      <span style="font-size:24px">🔌</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#3b82f6">Test Server Connection</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Check if app can reach the database</div>
+      </div>
+    </button>
+
     ${isAdmin ? `
     <a href="${sheetUrl}" target="_blank" style="
       display:flex;align-items:center;gap:12px;
@@ -5178,6 +5194,11 @@ function showSettings() {
         font-size:14px;font-weight:700;cursor:pointer
       ">⏻ Switch User / Logout</button>
     </div>
+    <button onclick="testConnection()" style="
+      width:100%;padding:12px;margin-top:8px;border-radius:12px;
+      border:1px solid rgba(59,130,246,.3);background:rgba(59,130,246,.08);
+      color:#3b82f6;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer
+    ">🔌 Test Server Connection</button>
     `}
   `);
 }
