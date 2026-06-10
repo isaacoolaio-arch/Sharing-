@@ -1497,7 +1497,6 @@ async function initApp() {
 }
 
 async function loadAll() {
-  // Fetch each independently so one failure doesn't blank everything
   const safe = async (action) => {
     try { return await api(action); }
     catch(e) {
@@ -1506,17 +1505,16 @@ async function loadAll() {
     }
   };
 
-  const [p, s, r, sa, pu, ch, se] = await Promise.all([
-    safe('getParts'),
-    safe('getSuppliers'),
-    safe('getSupplierRates'),
-    safe('getSales'),
-    safe('getPurchases'),
-    safe('getChecklist'),
-    safe('getSettings')
-  ]);
+  // Sequential fetches — Google Apps Script throttles parallel requests
+  // which causes some to silently return empty data
+  const p  = await safe('getParts');
+  const s  = await safe('getSuppliers');
+  const r  = await safe('getSupplierRates');
+  const sa = await safe('getSales');
+  const pu = await safe('getPurchases');
+  const ch = await safe('getChecklist');
+  const se = await safe('getSettings');
 
-  // Log results for debugging
   console.log('loadAll results:', {
     parts: (p.data||[]).length,
     suppliers: (s.data||[]).length,
@@ -1525,7 +1523,6 @@ async function loadAll() {
     partsError: p.error, suppError: s.error
   });
 
-  // Sort parts by ItemName → Size → Brand on load
   const rawParts = p.data || [];
   rawParts.sort((a, b) => {
     const na = (a.ItemName||a.Name||'').toLowerCase();
@@ -1536,15 +1533,15 @@ async function loadAll() {
     if (sa2 !== sb2) return sa2.localeCompare(sb2);
     return (a.Brand||a.PartNo||'').toLowerCase().localeCompare((b.Brand||b.PartNo||'').toLowerCase());
   });
-  state.parts     = rawParts;
-  state.suppliers = (s.data || []).sort((a,b) => (a.Name||'').localeCompare(b.Name||''));
-  state.supplierRates = r.data || [];
-  state.sales     = sa.data || [];
-  state.purchases = pu.data || [];
-  state.checklist = ch.data || [];
-  state.settings  = se.data || {};
 
-  // Show warning if all data came back empty (likely a connection issue)
+  state.parts         = rawParts;
+  state.suppliers     = (s.data || []).sort((a,b) => (a.Name||'').localeCompare(b.Name||''));
+  state.supplierRates = r.data || [];
+  state.sales         = sa.data || [];
+  state.purchases     = pu.data || [];
+  state.checklist     = ch.data || [];
+  state.settings      = se.data || {};
+
   const totalRecords = state.parts.length + state.suppliers.length + state.sales.length;
   if (totalRecords === 0 && isOnline) {
     _maybeShowConnectionWarning(new Error(p.error || 'Empty response'));
